@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Pro Soru Stüdyosu v7 - Video Fix</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #1e293b; --success: #22c55e; --accent: #6366f1; --danger: #ef4444; --pink: #ec4899; }
+        body { font-family: 'Inter', sans-serif; background: #0f172a; margin: 0; padding: 20px; color: white; }
+        .main-container { max-width: 1400px; margin: auto; }
+        
+        .admin-panel { background: #1e293b; padding: 20px; border-radius: 20px; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 20px; border: 1px solid #334155; }
+        .panel-col { display: flex; flex-direction: column; gap: 10px; }
+        h3 { margin: 0; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+
+        .preview-wrapper { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 15px; overflow: hidden; position: relative; border: 2px solid #4f46e5; margin-bottom: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
+        .live-editor-container { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 5%; box-sizing: border-box; background-size: cover; background-position: center; }
+        
+        .q-capsule { background: #ffffff; width: 85%; padding: 2% 5%; border-radius: 100px; border: 4px solid var(--primary); margin-bottom: 3%; }
+        .q-input-live { background: transparent; border: none; width: 100%; font-size: 2.2vw; font-weight: 900; color: #000; text-align: center; outline: none; }
+        
+        .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 85%; }
+        .opt-box { background: #ffffff; border: 3px solid #cbd5e1; border-radius: 100px; display: flex; align-items: center; padding: 1% 3%; min-height: 60px; }
+        .opt-letter { width: 35px; height: 35px; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1vw; font-weight: 900; margin-right: 12px; color: #000; flex-shrink: 0; }
+        .opt-input-live { background: transparent; border: none; width: 100%; font-size: 1.2vw; font-weight: 700; color: #000; outline: none; }
+
+        .data-card { background: #1e293b; border-radius: 20px; padding: 20px; border: 1px solid #334155; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #334155; }
+        tr.q-row:hover { background: rgba(255,255,255,0.05); cursor: pointer; }
+        
+        .btn { padding: 10px 15px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-g { background: var(--success); } .btn-p { background: var(--accent); } .btn-d { background: var(--danger); } .btn-v { background: var(--pink); }
+        
+        input, select { background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 8px; }
+
+        /* Progress overlay */
+        #progressOverlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+        #progressOverlay.active { display: flex; }
+        #progressBar { width: 400px; height: 16px; background: #334155; border-radius: 999px; overflow: hidden; }
+        #progressFill { height: 100%; background: var(--pink); border-radius: 999px; transition: width 0.2s; width: 0%; }
+        #progressText { color: white; font-size: 1rem; }
+
+        /* Render canvas - GÖRÜNÜR ama ekranın dışında (gizli div sorun yaratıyor) */
+        #render-stage {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 1920px;
+            height: 1080px;
+            background: #2d3748;
+            pointer-events: none;
+            visibility: visible; /* ZORUNLU: gizli olmamalı */
+        }
+
+        /* Video için ayrı canvas - görünür olmalı */
+        #video-canvas {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div id="progressOverlay">
+    <div id="progressText">Hazırlanıyor...</div>
+    <div id="progressBar"><div id="progressFill"></div></div>
+</div>
+
+<div class="main-container">
+    <div class="admin-panel">
+        <div class="panel-col">
+            <h3>📂 Veri & Excel</h3>
+            <button class="btn btn-p" onclick="document.getElementById('fileIn').click()">📥 Excel Yükle</button>
+            <button class="btn btn-p" onclick="exportToExcel()" style="background:#475569">📤 Excel Yedek</button>
+            <button class="btn btn-d" onclick="clearAll()">🗑 Temizle</button>
+            <input type="file" id="fileIn" hidden onchange="importExcel(this)">
+        </div>
+        
+        <div class="panel-col">
+            <h3>🎨 Tasarım Ayarları</h3>
+            <input type="file" id="bgInput" accept="image/*" onchange="handleBg(this)">
+            <div style="display:flex; gap:5px;">
+                <input type="number" id="wI" value="1920" style="width:50%" title="Genişlik">
+                <input type="number" id="hI" value="1080" style="width:50%" title="Yükseklik">
+            </div>
+            <select id="exportType">
+                <option value="zip">📦 Toplu İndir (ZIP)</option>
+                <option value="single">⬇️ Tek Tek İndir</option>
+            </select>
+        </div>
+
+        <div class="panel-col">
+            <h3>⚙️ Kayıt & Dışa Aktar</h3>
+            <div style="display:flex; gap:5px;">
+                <select id="inCorrect" style="flex:1;"><option value="">Cevap?</option><option value="a">A</option><option value="b">B</option><option value="c">C</option><option value="d">D</option></select>
+                <button class="btn btn-g" onclick="addOrUpdate()" id="saveBtn">✅ Kaydet</button>
+            </div>
+            <select id="downloadMode"><option value="both">Soru + Cevaplı</option><option value="onlyQ">Sadece Soru</option><option value="onlyA">Sadece Cevaplı</option></select>
+            <select id="videoFormat">
+                <option value="webm">🎬 WebM (hızlı)</option>
+                <option value="mp4">🎞️ MP4 (H.264, yavaş)</option>
+            </select>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <button class="btn btn-p" onclick="processAll('image')">🖼️ Görsel</button>
+                <button class="btn btn-v" onclick="processAll('video')">🎬 5sn Video</button>
+            </div>
+            <div style="font-size:0.75rem; color:#64748b; margin-top:4px;" id="videoHint">
+                🎥 WebM: hızlı | MP4: FFmpeg ile dönüştürülür, yavaş olabilir.
+            </div>
+        </div>
+    </div>
+
+    <div class="preview-wrapper" id="mainPreview">
+        <div id="liveEditor" class="live-editor-container">
+            <div class="q-capsule"><input type="text" id="liveQ" class="q-input-live" placeholder="Soru yazın..."></div>
+            <div class="opt-grid">
+                <div class="opt-box"><div class="opt-letter">A</div><input id="liveA" class="opt-input-live" placeholder="A şıkkı"></div>
+                <div class="opt-box"><div class="opt-letter">B</div><input id="liveB" class="opt-input-live" placeholder="B şıkkı"></div>
+                <div class="opt-box"><div class="opt-letter">C</div><input id="liveC" class="opt-input-live" placeholder="C şıkkı"></div>
+                <div class="opt-box"><div class="opt-letter">D</div><input id="liveD" class="opt-input-live" placeholder="D şıkkı"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="data-card">
+        <table>
+            <thead><tr><th width="40"><input type="checkbox" onclick="toggleAll(this)"></th><th>Soru Metni</th><th style="text-align:right">İşlem</th></tr></thead>
+            <tbody id="listBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Render stage: DOM'da var ama ekran dışı -->
+<div id="render-stage">
+    <div id="render-box" class="live-editor-container" style="width:1920px; height:1080px; background-color:#2d3748; flex-direction:column; justify-content:center; align-items:center; padding:80px; box-sizing:border-box; background-size:cover; background-position:center;">
+        <div class="q-capsule" style="padding:40px 60px; border-width:8px; width:75%; border-radius:100px; background:#fff; margin-bottom:50px;">
+            <div id="r-q" style="font-size:55px; font-weight:900; color:#000; text-align:center;"></div>
+        </div>
+        <div class="opt-grid" style="width:80%; gap:30px; display:grid; grid-template-columns:1fr 1fr;">
+            <div id="box-a" class="opt-box" style="min-height:90px; border-width:6px; border-radius:100px; display:flex; align-items:center; padding:20px 40px; background:#fff;">
+                <div class="opt-letter" style="width:70px; height:70px; font-size:35px; border:2px solid #000; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; margin-right:20px; flex-shrink:0;">A</div>
+                <div id="r-a" style="font-size:32px; font-weight:700; color:#000;"></div>
+            </div>
+            <div id="box-b" class="opt-box" style="min-height:90px; border-width:6px; border-radius:100px; display:flex; align-items:center; padding:20px 40px; background:#fff;">
+                <div class="opt-letter" style="width:70px; height:70px; font-size:35px; border:2px solid #000; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; margin-right:20px; flex-shrink:0;">B</div>
+                <div id="r-b" style="font-size:32px; font-weight:700; color:#000;"></div>
+            </div>
+            <div id="box-c" class="opt-box" style="min-height:90px; border-width:6px; border-radius:100px; display:flex; align-items:center; padding:20px 40px; background:#fff;">
+                <div class="opt-letter" style="width:70px; height:70px; font-size:35px; border:2px solid #000; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; margin-right:20px; flex-shrink:0;">C</div>
+                <div id="r-c" style="font-size:32px; font-weight:700; color:#000;"></div>
+            </div>
+            <div id="box-d" class="opt-box" style="min-height:90px; border-width:6px; border-radius:100px; display:flex; align-items:center; padding:20px 40px; background:#fff;">
+                <div class="opt-letter" style="width:70px; height:70px; font-size:35px; border:2px solid #000; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; margin-right:20px; flex-shrink:0;">D</div>
+                <div id="r-d" style="font-size:32px; font-weight:700; color:#000;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Video işleme için ayrı bir canvas -->
+<canvas id="video-canvas"></canvas>
+
+<script>
+    let questions = JSON.parse(localStorage.getItem('pro_questions')) || [];
+    let savedBg = localStorage.getItem('pro_bg') || "";
+    let editingIdx = null;
+    let bgImage = null; // HTMLImageElement olarak saklayacağız
+
+    if(savedBg) {
+        document.getElementById('liveEditor').style.backgroundImage = `url(${savedBg})`;
+        document.getElementById('render-box').style.backgroundImage = `url(${savedBg})`;
+        loadBgImage(savedBg);
+    }
+
+    function loadBgImage(src) {
+        bgImage = new Image();
+        bgImage.src = src;
+    }
+
+    function handleBg(input) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            savedBg = e.target.result;
+            document.getElementById('liveEditor').style.backgroundImage = `url(${savedBg})`;
+            document.getElementById('render-box').style.backgroundImage = `url(${savedBg})`;
+            localStorage.setItem('pro_bg', savedBg);
+            loadBgImage(savedBg);
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    function setProgress(pct, text) {
+        document.getElementById('progressFill').style.width = pct + '%';
+        document.getElementById('progressText').innerText = text;
+    }
+
+    function showProgress(show) {
+        document.getElementById('progressOverlay').classList.toggle('active', show);
+    }
+
+    function addOrUpdate() {
+        const q = { Soru: document.getElementById('liveQ').value, A: document.getElementById('liveA').value, B: document.getElementById('liveB').value, C: document.getElementById('liveC').value, D: document.getElementById('liveD').value, Dogru: document.getElementById('inCorrect').value };
+        if(!q.Soru) return alert("Soru boş olamaz!");
+        if(editingIdx !== null) { questions[editingIdx] = q; editingIdx = null; document.getElementById('saveBtn').innerText = "✅ Kaydet"; }
+        else { questions.push(q); }
+        save();
+        resetForm();
+    }
+
+    function resetForm() {
+        ["liveQ","liveA","liveB","liveC","liveD","inCorrect"].forEach(id => document.getElementById(id).value = "");
+        editingIdx = null;
+    }
+
+    function editQ(i) {
+        editingIdx = i;
+        const q = questions[i];
+        document.getElementById('liveQ').value = q.Soru;
+        document.getElementById('liveA').value = q.A;
+        document.getElementById('liveB').value = q.B;
+        document.getElementById('liveC').value = q.C;
+        document.getElementById('liveD').value = q.D;
+        document.getElementById('inCorrect').value = (q.Dogru || "").toLowerCase();
+        document.getElementById('saveBtn').innerText = "🔄 Güncelle";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function save() { localStorage.setItem('pro_questions', JSON.stringify(questions)); renderTable(); }
+
+    function renderTable() {
+        document.getElementById('listBody').innerHTML = questions.map((q, i) => `
+            <tr class="q-row">
+                <td><input type="checkbox" class="sel-q" data-idx="${i}" onclick="event.stopPropagation()"></td>
+                <td onclick="editQ(${i})">${q.Soru.substring(0, 100)}...</td>
+                <td style="text-align:right">
+                    <button class="btn-d" style="padding:5px 10px; font-size:12px;" onclick="event.stopPropagation(); deleteQ(${i})">🗑️</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function deleteQ(i) { if(confirm("Silinsin mi?")) { questions.splice(i, 1); save(); } }
+    function toggleAll(src) { document.querySelectorAll('.sel-q').forEach(cb => cb.checked = src.checked); }
+    function clearAll() { if(confirm("Tümü silinecek!")) { questions = []; save(); } }
+
+    function importExcel(input) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+            const data = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+            questions = [...questions, ...data];
+            save();
+        };
+        reader.readAsArrayBuffer(input.files[0]);
+    }
+
+    function exportToExcel() {
+        const ws = XLSX.utils.json_to_sheet(questions);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Sorular");
+        XLSX.writeFile(wb, "Yedek_Sorular.xlsx");
+    }
+
+    // ANA İŞLEMCİ
+    async function processAll(type) {
+        const selected = document.querySelectorAll('.sel-q:checked');
+        if(!selected.length) return alert("Soru seçin!");
+
+        // Video codec desteği kontrol et
+        if(type === 'video') {
+            const supported = getSupportedVideoMime();
+            if(!supported) {
+                return alert("❌ Tarayıcınız video kaydını desteklemiyor.\nLütfen Chrome veya Edge kullanın.");
+            }
+        }
+
+        showProgress(true);
+        const zip = new JSZip();
+        const exportMode = document.getElementById('exportType').value;
+        const dlMode = document.getElementById('downloadMode').value;
+        const total = selected.length * ((dlMode === 'both') ? 2 : 1);
+        let done = 0;
+
+        const w = parseInt(document.getElementById('wI').value) || 1920;
+        const h = parseInt(document.getElementById('hI').value) || 1080;
+
+        for(let chk of selected) {
+            const q = questions[chk.dataset.idx];
+            const qIdx = parseInt(chk.dataset.idx) + 1;
+
+            const runStep = async (isCorr, suffix) => {
+                setProgress(Math.round(done/total*100), `İşleniyor: Soru ${qIdx}${suffix ? ' (cevaplı)' : ''}`);
+                updateRender(q, isCorr);
+
+                // html2canvas'ın DOM'u render etmesi için küçük bekleme
+                await sleep(200);
+
+                let blob, fName;
+                if(type === 'image') {
+                    const canvas = await html2canvas(document.getElementById('render-box'), {
+                        scale: 1,
+                        useCORS: true,
+                        allowTaint: true,
+                        width: w,
+                        height: h,
+                        logging: false
+                    });
+                    blob = await canvasToBlob(canvas, 'image/jpeg', 0.95);
+                    fName = `soru_${qIdx}${suffix}.jpg`;
+                } else {
+                    const fmt = document.getElementById('videoFormat').value;
+                    const webmBlob = await captureVideoFromElement(document.getElementById('render-box'), w, h, 5000);
+                    if(fmt === 'mp4') {
+                        setProgress(Math.round(done/total*100), `MP4'e dönüştürülüyor: Soru ${qIdx}${suffix ? ' (cevaplı)' : ''}...`);
+                        blob = await convertToMp4(webmBlob);
+                        fName = `soru_${qIdx}${suffix}.mp4`;
+                    } else {
+                        blob = webmBlob;
+                        fName = `soru_${qIdx}${suffix}.webm`;
+                    }
+                }
+
+                if(exportMode === 'zip') {
+                    zip.file(fName, blob);
+                } else {
+                    downloadBlob(blob, fName);
+                }
+                done++;
+            };
+
+            if(dlMode === 'onlyQ' || dlMode === 'both') await runStep(false, "");
+            if(dlMode === 'onlyA' || dlMode === 'both') await runStep(true, "_cevap");
+        }
+
+        if(exportMode === 'zip') {
+            setProgress(99, 'ZIP oluşturuluyor...');
+            const content = await zip.generateAsync({type:"blob"});
+            downloadBlob(content, `Export_${type}.zip`);
+        }
+
+        showProgress(false);
+        setProgress(0, '');
+    }
+
+    function updateRender(q, isCorr) {
+        document.getElementById('r-q').innerText = q.Soru || '';
+        document.getElementById('r-a').innerText = q.A || '';
+        document.getElementById('r-b').innerText = q.B || '';
+        document.getElementById('r-c').innerText = q.C || '';
+        document.getElementById('r-d').innerText = q.D || '';
+
+        ['a','b','c','d'].forEach(l => {
+            const el = document.getElementById(`box-${l}`);
+            el.style.borderColor = "#cbd5e1";
+            el.style.background = "#fff";
+        });
+
+        if(isCorr && q.Dogru) {
+            const el = document.getElementById(`box-${q.Dogru.toLowerCase()}`);
+            if(el) { el.style.borderColor = "#22c55e"; el.style.background = "#f0fdf4"; }
+        }
+    }
+
+    function downloadBlob(blob, name) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    }
+
+    function canvasToBlob(canvas, type, quality) {
+        return new Promise(res => canvas.toBlob(res, type, quality));
+    }
+
+    function sleep(ms) {
+        return new Promise(res => setTimeout(res, ms));
+    }
+
+    function getSupportedVideoMime() {
+        const types = [
+            'video/webm; codecs=vp9',
+            'video/webm; codecs=vp8',
+            'video/webm',
+        ];
+        return types.find(t => MediaRecorder.isTypeSupported(t)) || null;
+    }
+
+    // ====================================================
+    // YENİ VİDEO MOTORU
+    // Yaklaşım: html2canvas ile her frame'i ayrı canvas'a çiziyoruz,
+    // ardından bu canvas'ı captureStream ile kaydediyoruz.
+    // Render-box DOM dışına taşınmıyor, sadece ekran dışında.
+    // ====================================================
+    async function captureVideoFromElement(element, w, h, durationMs) {
+        const mimeType = getSupportedVideoMime();
+        const fps = 30;
+        const frameInterval = 1000 / fps;
+        const totalFrames = Math.ceil((durationMs / 1000) * fps);
+
+        // Çalışma canvas'ı - bu captureStream için kullanılacak
+        const workCanvas = document.getElementById('video-canvas');
+        workCanvas.width = w;
+        workCanvas.height = h;
+        const ctx = workCanvas.getContext('2d');
+
+        // İlk frame'i html2canvas ile çek (statik soru için bu yeterli)
+        const sourceCanvas = await html2canvas(element, {
+            scale: 1,
+            useCORS: true,
+            allowTaint: true,
+            width: w,
+            height: h,
+            logging: false
+        });
+
+        // Çalışma canvas'ına ilk frame'i kopyala
+        ctx.drawImage(sourceCanvas, 0, 0, w, h);
+
+        // Stream başlat
+        const stream = workCanvas.captureStream(fps);
+        const recorder = new MediaRecorder(stream, { mimeType });
+        const chunks = [];
+
+        return new Promise((resolve, reject) => {
+            recorder.ondataavailable = e => {
+                if(e.data && e.data.size > 0) chunks.push(e.data);
+            };
+
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: mimeType });
+                stream.getTracks().forEach(t => t.stop());
+                resolve(blob);
+            };
+
+            recorder.onerror = (e) => reject(e);
+
+            recorder.start();
+
+            // Frame döngüsü: canvas'ı sürekli yenile (tarayıcıyı aktif tutar)
+            let frameCount = 0;
+            let lastTime = performance.now();
+
+            function drawFrame(now) {
+                const elapsed = now - lastTime;
+                if(elapsed >= frameInterval) {
+                    // Aynı içeriği tekrar çiz (stream'in aktif kalması için)
+                    ctx.drawImage(sourceCanvas, 0, 0, w, h);
+
+                    // Zaman göstergesi (isteğe bağlı, süre dolduğunu tarayıcıya gösterir)
+                    // Neredeyse görünmez: alpha=0.004 (~1/255)
+                    ctx.fillStyle = `rgba(0,0,0,0.004)`;
+                    ctx.fillRect(0, 0, 1, 1);
+
+                    lastTime = now;
+                    frameCount++;
+                }
+
+                if(frameCount < totalFrames) {
+                    requestAnimationFrame(drawFrame);
+                } else {
+                    recorder.stop();
+                }
+            }
+
+            requestAnimationFrame(drawFrame);
+        });
+    }
+
+    // ====================================================
+    // FFmpeg.wasm ile WebM → MP4 dönüşümü
+    // ====================================================
+    let ffmpegInstance = null;
+
+    async function getFFmpeg() {
+        if(ffmpegInstance) return ffmpegInstance;
+        setProgress(5, 'FFmpeg yükleniyor (ilk seferinde ~25MB)...');
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        const ff = createFFmpeg({
+            log: false,
+            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+        });
+        await ff.load();
+        ffmpegInstance = { ff, fetchFile };
+        return ffmpegInstance;
+    }
+
+    async function convertToMp4(webmBlob) {
+        const { ff, fetchFile } = await getFFmpeg();
+        ff.FS('writeFile', 'input.webm', await fetchFile(webmBlob));
+        await ff.run(
+            '-i', 'input.webm',
+            '-c:v', 'libx264',
+            '-preset', 'fast',
+            '-crf', '22',
+            '-pix_fmt', 'yuv420p',
+            '-movflags', '+faststart',
+            'output.mp4'
+        );
+        const data = ff.FS('readFile', 'output.mp4');
+        ff.FS('unlink', 'input.webm');
+        ff.FS('unlink', 'output.mp4');
+        return new Blob([data.buffer], { type: 'video/mp4' });
+    }
+
+    renderTable();
+</script>
+</body>
+</html>
