@@ -2,7 +2,7 @@
 <html lang="tr" data-bs-theme="dark">
 <head>
 <meta charset="UTF-8">
-<title>Pro Soru Stüdyosu v14</title>
+<title>Pro Soru Stüdyosu v15</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -10,7 +10,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@latest/build/mp4-muxer.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:ital,wght@0,700;0,900;1,700;1,900&family=Oswald:wght@400;700&family=Bebas+Neue&family=Roboto+Condensed:ital,wght@0,700;1,700&family=Raleway:wght@700;900&family=Nunito:wght@700;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Anton&family=Poppins:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
 
 <style>
 body { font-family: 'Inter', sans-serif; background: #0f172a; }
@@ -41,7 +40,6 @@ body { font-family: 'Inter', sans-serif; background: #0f172a; }
 
 .opt-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:85%; }
 
-/* Sik kutulari - ince, tam yuvarlak */
 .opt-box {
   background: #f8f9fa;
   border: 2px solid #adb5bd;
@@ -49,14 +47,12 @@ body { font-family: 'Inter', sans-serif; background: #0f172a; }
   display:flex; align-items:center;
   padding:0.5% 2%; min-height:34px;
 }
-/* Dogru sik - Success yesili */
 .opt-box.correct {
   background: #146c43 !important;
-  border-color: #0d4f30 !important;
+  border-color: #fff !important;
 }
 .opt-box.correct .opt-circle { border-color:#fff !important; color:#fff !important; }
 .opt-box.correct .opt-editable { color:#fff !important; }
-/* Normal/belirsiz sik - Light */
 .opt-box.light-mode {
   background: #f8f9fa !important;
   border-color: #adb5bd !important;
@@ -74,13 +70,12 @@ body { font-family: 'Inter', sans-serif; background: #0f172a; }
 }
 .opt-editable:empty:before { content:attr(data-ph); color:#bbb; font-weight:400; }
 
-/* Dogru sik secici */
 .correct-btn-group .btn { font-weight:700; letter-spacing:.3px; }
 .correct-btn-group .btn.active { box-shadow:0 0 0 3px rgba(255,255,255,.25); }
 
 /* Font dropdown */
-.font-dd-panel { width:520px; }
-.font-list { max-height:190px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
+.font-dd-panel { width:560px; }
+.font-list { max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:2px; }
 .font-list::-webkit-scrollbar { width:4px; }
 .font-list::-webkit-scrollbar-thumb { background:#334155; border-radius:4px; }
 .font-opt {
@@ -93,7 +88,23 @@ body { font-family: 'Inter', sans-serif; background: #0f172a; }
 .font-opt.active { background:rgba(99,102,241,.2); border-color:#6366f1; }
 .font-opt .pchar { font-size:1.05rem; width:26px; text-align:center; }
 
-/* Ekran disi render */
+/* TRT font yükleme alanı */
+.trt-font-zone {
+  border: 2px dashed #334155;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: border-color .2s;
+}
+.trt-font-zone:hover { border-color: #6366f1; }
+.trt-badge {
+  display:inline-flex; align-items:center; gap:5px;
+  background: rgba(99,102,241,.15); border:1px solid #6366f1;
+  border-radius:6px; padding:3px 8px; font-size:.75rem;
+  color:#a5b4fc; font-weight:600;
+}
+
+/* Ekran dışı render */
 #render-stage { position:fixed; left:-9999px; top:0; pointer-events:none; visibility:visible; }
 #video-canvas { position:fixed; left:-9999px; top:0; display:block; }
 
@@ -106,7 +117,6 @@ body { font-family: 'Inter', sans-serif; background: #0f172a; }
 #progressOverlay.active { display:flex; }
 
 tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
-
 #dlLabel { font-size:.78rem; padding:5px 10px; border-radius:6px; font-weight:600; }
 </style>
 </head>
@@ -119,10 +129,9 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
   </div>
 </div>
 
-<!-- Sagdan soldan minimum 300px guvenli margin -->
 <div class="container-fluid py-3" style="max-width:1820px; padding-left:clamp(300px,15vw,420px); padding-right:clamp(300px,15vw,420px);">
 
-  <!-- 1. Ust Bant -->
+  <!-- 1. Üst Bant -->
   <div class="row g-3 mb-3">
 
     <!-- Veri & Excel -->
@@ -132,7 +141,6 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
           <small class="text-uppercase text-muted fw-bold"><i class="bi bi-table me-1"></i>Veri &amp; Excel</small>
         </div>
         <div class="card-body d-flex flex-column gap-2">
-          <!-- Goz at butonu kaldirildi; tiklaninca direkt dosya secici aciyor -->
           <button class="btn btn-primary btn-sm" onclick="document.getElementById('fileIn').click()">
             <i class="bi bi-upload"></i> Excel Yukle
           </button>
@@ -147,14 +155,13 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
       </div>
     </div>
 
-    <!-- Disa Aktar -->
+    <!-- Dışa Aktar -->
     <div class="col">
       <div class="card h-100">
         <div class="card-header py-2">
           <small class="text-uppercase text-muted fw-bold"><i class="bi bi-box-arrow-up me-1"></i>Disa Aktar</small>
         </div>
         <div class="card-body">
-          <!-- Boyut -->
           <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
             <span class="text-muted small fw-bold" style="min-width:100px;"><i class="bi bi-aspect-ratio me-1"></i>Boyut</span>
             <input type="number" class="form-control form-control-sm" id="wI" value="1920" style="width:80px;">
@@ -163,7 +170,6 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
             <span class="text-muted small">px</span>
           </div>
           <hr class="my-2">
-          <!-- Icerik + Indirme yontemi -->
           <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
             <span class="text-muted small fw-bold" style="min-width:100px;"><i class="bi bi-collection me-1"></i>Icerik</span>
             <select class="form-select form-select-sm" id="downloadMode" style="max-width:200px;">
@@ -171,7 +177,6 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
               <option value="onlyQ">Sadece Soru</option>
               <option value="onlyA">Sadece Cevapli</option>
             </select>
-            <!-- Indirme yontemi dropdown - tasarima uyumlu aciklama ile -->
             <div class="dropdown">
               <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
                 <i class="bi bi-download me-1"></i>Indirme Yontemi
@@ -180,40 +185,25 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
                 <li>
                   <a class="dropdown-item d-flex align-items-start gap-2 py-2" href="#" onclick="setDlMethod('single')">
                     <i class="bi bi-files fs-5 mt-1 text-primary flex-shrink-0"></i>
-                    <span>
-                      <strong class="d-block">Tek tek indir</strong>
-                      <small class="text-muted">Her dosya ayri ayri tarayiciya indirilir</small>
-                    </span>
+                    <span><strong class="d-block">Tek tek indir</strong><small class="text-muted">Her dosya ayri ayri tarayiciya indirilir</small></span>
                   </a>
                 </li>
                 <li>
                   <a class="dropdown-item d-flex align-items-start gap-2 py-2" href="#" onclick="setDlMethod('zip')">
                     <i class="bi bi-file-zip fs-5 mt-1 text-warning flex-shrink-0"></i>
-                    <span>
-                      <strong class="d-block">ZIP olarak indir</strong>
-                      <small class="text-muted">Tum dosyalar tek ZIP paketinde</small>
-                    </span>
+                    <span><strong class="d-block">ZIP olarak indir</strong><small class="text-muted">Tum dosyalar tek ZIP paketinde</small></span>
                   </a>
                 </li>
               </ul>
             </div>
-            <!-- Varsayilan: tek tek -->
             <span id="dlLabel" class="badge bg-primary">&#128196; Tek tek</span>
           </div>
           <hr class="my-2">
-          <!-- Aktar butonlari -->
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <span class="text-muted small fw-bold" style="min-width:100px;"><i class="bi bi-send me-1"></i>Aktar</span>
-            <button class="btn btn-primary btn-sm" onclick="processAll('image')">
-              <i class="bi bi-image"></i> Gorsel Indir
-            </button>
-            <button class="btn btn-danger btn-sm" onclick="processAll('video')">
-              <i class="bi bi-camera-video"></i> MP4 Indir
-            </button>
-            <!-- Hem gorsel hem video indir -->
-            <button class="btn btn-warning btn-sm text-dark fw-bold" onclick="processAll('both')">
-              <i class="bi bi-layers"></i> Gorsel + MP4
-            </button>
+            <button class="btn btn-primary btn-sm" onclick="processAll('image')"><i class="bi bi-image"></i> Gorsel Indir</button>
+            <button class="btn btn-danger btn-sm" onclick="processAll('video')"><i class="bi bi-camera-video"></i> MP4 Indir</button>
+            <button class="btn btn-warning btn-sm text-dark fw-bold" onclick="processAll('both')"><i class="bi bi-layers"></i> Gorsel + MP4</button>
             <div class="d-flex align-items-center gap-1">
               <i class="bi bi-stopwatch text-muted small"></i>
               <input type="number" class="form-control form-control-sm" id="vidDuration" value="5" min="1" max="60" style="width:56px;">
@@ -225,7 +215,7 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
     </div>
   </div>
 
-  <!-- 2. Onizleme -->
+  <!-- 2. Önizleme -->
   <div class="preview-wrapper mb-3">
     <div id="liveEditor" class="live-editor-container">
       <div class="q-capsule">
@@ -240,43 +230,52 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
     </div>
   </div>
 
-  <!-- 3. Form Bari -->
+  <!-- 3. Form Barı -->
   <div class="card mb-3">
     <div class="card-body py-2 d-flex align-items-center gap-2 flex-wrap">
 
-      <!-- Dogru Sik: secili = btn-success (yesil), digerleri = btn-light, koseler tam yuvarlak -->
       <span class="text-muted small fw-bold me-1">Doğru Seçenek:</span>
       <div class="btn-group correct-btn-group" role="group" id="correctBtnGroup">
-        <button type="button" class="btn btn-light active" data-val="" onclick="setCorrect('')"
-          style="border-radius:999px 0 0 999px;">&#8212; Belirsiz</button>
+        <button type="button" class="btn btn-light active" data-val="" onclick="setCorrect('')" style="border-radius:999px 0 0 999px;">&#8212; Belirsiz</button>
         <button type="button" class="btn btn-light" data-val="a" onclick="setCorrect('a')">A</button>
         <button type="button" class="btn btn-light" data-val="b" onclick="setCorrect('b')">B</button>
         <button type="button" class="btn btn-light" data-val="c" onclick="setCorrect('c')">C</button>
-        <button type="button" class="btn btn-light" data-val="d" onclick="setCorrect('d')"
-          style="border-radius:0 999px 999px 0;">D</button>
+        <button type="button" class="btn btn-light" data-val="d" onclick="setCorrect('d')" style="border-radius:0 999px 999px 0;">D</button>
       </div>
 
       <div class="vr mx-1"></div>
 
-      <button class="btn btn-success btn-sm" onclick="saveNew()" id="saveBtn">
-        <i class="bi bi-plus-circle"></i> Kaydet
-      </button>
-      <button class="btn btn-info btn-sm text-white" onclick="doUpdate()" id="updateBtn" style="display:none;">
-        <i class="bi bi-arrow-repeat"></i> Guncelle
-      </button>
-      <button class="btn btn-secondary btn-sm" onclick="cancelEdit()" id="cancelBtn" style="display:none;">
-        <i class="bi bi-x"></i> Iptal
-      </button>
+      <button class="btn btn-success btn-sm" onclick="saveNew()" id="saveBtn"><i class="bi bi-plus-circle"></i> Kaydet</button>
+      <button class="btn btn-info btn-sm text-white" onclick="doUpdate()" id="updateBtn" style="display:none;"><i class="bi bi-arrow-repeat"></i> Guncelle</button>
+      <button class="btn btn-secondary btn-sm" onclick="cancelEdit()" id="cancelBtn" style="display:none;"><i class="bi bi-x"></i> Iptal</button>
 
       <div class="ms-auto d-flex align-items-center gap-2">
+
         <!-- Font Dropdown -->
         <div class="dropdown">
           <button class="btn btn-outline-secondary btn-sm dropdown-toggle" id="fontDropBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside">
             <i class="bi bi-type"></i>
-            <span id="badgeQFont">Montserrat</span> <span class="text-muted" id="badgeQSize">52px</span>
-            / <span id="badgeOptFont">Montserrat</span> <span class="text-muted" id="badgeOptSize">30px</span>
+            <span id="badgeQFont">TRT</span> <span class="text-muted" id="badgeQSize">52px</span>
+            / <span id="badgeOptFont">TRT</span> <span class="text-muted" id="badgeOptSize">30px</span>
           </button>
-          <div class="dropdown-menu p-3 font-dd-panel" style="width:520px;right:0;left:auto;">
+          <div class="dropdown-menu p-3 font-dd-panel" style="width:560px;right:0;left:auto;">
+
+            <!-- TRT Font Yükleme Alanı -->
+            <div class="trt-font-zone mb-3" onclick="document.getElementById('trtFontInput').click()">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-folder2-open text-primary"></i>
+                <span class="small fw-bold text-light">TRT Font Dosyalarını Yükle</span>
+                <span class="badge bg-secondary ms-auto" id="loadedFontCount">0 / 8</span>
+              </div>
+              <p class="text-muted mb-2" style="font-size:.75rem;">
+                TRT-Bold.otf, TRT-Regular.otf vb. tüm .otf dosyalarını seçin
+              </p>
+              <div id="loadedFontBadges" class="d-flex flex-wrap gap-1"></div>
+            </div>
+            <input type="file" id="trtFontInput" accept=".otf,.ttf,.woff,.woff2" multiple style="display:none;" onchange="loadTRTFonts(this)">
+
+            <hr class="my-2">
+
             <div class="row g-3">
               <div class="col-6">
                 <p class="text-uppercase text-muted small fw-bold mb-2">&#128221; Soru Metni</p>
@@ -308,7 +307,7 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
           </div>
         </div>
 
-        <!-- Arka Plan: goz at yok, tiklaninca direkt file picker -->
+        <!-- Arka Plan -->
         <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('bgInput').click()">
           <i class="bi bi-image"></i> Arka Plan
         </button>
@@ -328,7 +327,6 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
           <tr>
             <th width="40"><input type="checkbox" class="form-check-input" onclick="toggleAll(this)"></th>
             <th>Soru Metni</th>
-            <!-- Dogru sik sag tarafa alindi -->
             <th width="80" class="text-center">Seçenek</th>
             <th width="120" class="text-end">Islem</th>
           </tr>
@@ -340,26 +338,33 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
 
 </div>
 
-<!-- Ekran disi render alani -->
+<!-- Ekran dışı render alanı -->
 <div id="render-stage">
-  <div id="render-box" style="width:1920px;height:1080px;background-color:#2d3748;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:80px;box-sizing:border-box;background-size:cover;background-position:center;">
-    <div style="background:#fff;width:80%;padding:40px 80px;border-radius:80px;border:8px solid #1e293b;margin-bottom:50px;">
-      <div id="r-q" style="font-weight:900;color:#000;text-align:center;word-break:break-word;white-space:pre-wrap;line-height:1.25;"></div>
+  <div id="render-box" style="
+    width:1920px; height:1080px;
+    background-color:#2d3748;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    padding:80px; box-sizing:border-box;
+    background-size:cover; background-position:center;">
+
+    <div style="background:#fff; width:80%; padding:40px 80px; border-radius:80px; border:8px solid #1e293b; margin-bottom:50px;">
+      <div id="r-q" style="font-weight:900; color:#000; text-align:center; word-break:break-word; white-space:pre-wrap; line-height:1.25;"></div>
     </div>
-    <div style="width:80%;display:grid;grid-template-columns:1fr 1fr;gap:26px;">
-      <div id="box-a" style="border:5px solid #adb5bd;border-radius:999px;display:flex;align-items:center;padding:16px 16px;background:#f8f9fa;min-height:72px;">
+
+    <div style="width:80%; display:grid; grid-template-columns:1fr 1fr; gap:26px;">
+      <div id="box-a" style="border:5px solid #adb5bd; border-radius:999px; display:flex; align-items:center; padding:16px 16px; background:#f8f9fa; min-height:72px;">
         <div style="width:58px;height:58px;font-size:30px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:18px;flex-shrink:0;color:#000;">A</div>
         <div id="r-a" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
       </div>
-      <div id="box-b" style="border:5px solid #adb5bd;border-radius:999px;display:flex;align-items:center;padding:16px 16px;background:#f8f9fa;min-height:72px;">
+      <div id="box-b" style="border:5px solid #adb5bd; border-radius:999px; display:flex; align-items:center; padding:16px 16px; background:#f8f9fa; min-height:72px;">
         <div style="width:58px;height:58px;font-size:30px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:18px;flex-shrink:0;color:#000;">B</div>
         <div id="r-b" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
       </div>
-      <div id="box-c" style="border:5px solid #adb5bd;border-radius:999px;display:flex;align-items:center;padding:16px 16px;background:#f8f9fa;min-height:72px;">
+      <div id="box-c" style="border:5px solid #adb5bd; border-radius:999px; display:flex; align-items:center; padding:16px 16px; background:#f8f9fa; min-height:72px;">
         <div style="width:58px;height:58px;font-size:30px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:18px;flex-shrink:0;color:#000;">C</div>
         <div id="r-c" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
       </div>
-      <div id="box-d" style="border:5px solid #adb5bd;border-radius:999px;display:flex;align-items:center;padding:16px 16px;background:#f8f9fa;min-height:72px;">
+      <div id="box-d" style="border:5px solid #adb5bd; border-radius:999px; display:flex; align-items:center; padding:16px 16px; background:#f8f9fa; min-height:72px;">
         <div style="width:58px;height:58px;font-size:30px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:18px;flex-shrink:0;color:#000;">D</div>
         <div id="r-d" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
       </div>
@@ -369,380 +374,455 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
 <canvas id="video-canvas"></canvas>
 
 <script>
-const FONTS=[
-  {name:'Montserrat',label:'Montserrat'},{name:'Poppins',label:'Poppins'},
-  {name:'Nunito',label:'Nunito'},{name:'Raleway',label:'Raleway'},
-  {name:'Oswald',label:'Oswald'},{name:'Bebas Neue',label:'Bebas Neue'},
-  {name:'Anton',label:'Anton'},{name:'Playfair Display',label:'Playfair'},
-  {name:'Roboto Condensed',label:'Roboto Cond.'},{name:'Inter',label:'Inter'},
+// ─── TRT Font tanımları (varyasyon adı → dosya adı eşlemesi) ───────────────
+const TRT_FONT_DEFS = [
+  { name:'TRT Regular',     file:'TRT-Regular.otf',      weight:'400', style:'normal'  },
+  { name:'TRT Regular İtalik', file:'TRT-RegularItalic.otf', weight:'400', style:'italic'  },
+  { name:'TRT Light',       file:'TRT-Light.otf',         weight:'300', style:'normal'  },
+  { name:'TRT Light İtalik',file:'TRT-LightItalic.otf',   weight:'300', style:'italic'  },
+  { name:'TRT Medium',      file:'TRT-Medium.otf',        weight:'500', style:'normal'  },
+  { name:'TRT Medium İtalik',file:'TRT-MediumItalic.otf', weight:'500', style:'italic'  },
+  { name:'TRT Bold',        file:'TRT-Bold.otf',          weight:'700', style:'normal'  },
+  { name:'TRT Bold İtalik', file:'TRT-BoldItalic.otf',    weight:'700', style:'italic'  },
 ];
 
-let questions=JSON.parse(localStorage.getItem('pro_questions'))||[];
-let savedBg=localStorage.getItem('pro_bg')||'';
-let editingIdx=null;
-let dlMethod='single'; // varsayilan: tek tek
-let correctVal='';
+// Yüklenen fontların base64 URL'leri
+let loadedFonts = {}; // { 'TRT-Regular.otf': 'data:font/otf;base64,...' }
 
-let fs=JSON.parse(localStorage.getItem('pro_fonts2')||'null')||{
-  qFont:'Montserrat',qItalic:false,qBold:true,qSize:52,
-  optFont:'Montserrat',optItalic:false,optBold:true,optSize:30
+// Stil sayfası — font-face'ler buraya eklenir
+const fontStyleEl = document.createElement('style');
+document.head.appendChild(fontStyleEl);
+
+// FONTS listesi — başlangıçta boş, fontlar yüklendikçe dolacak
+let FONTS = [];
+
+async function loadTRTFonts(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  for (const file of files) {
+    const b64 = await fileToBase64(file);
+    const ext  = file.name.split('.').pop().toLowerCase();
+    const mime = ext === 'otf' ? 'font/otf' : ext === 'ttf' ? 'font/ttf' : 'font/woff2';
+    const dataUrl = `data:${mime};base64,${b64}`;
+    loadedFonts[file.name] = dataUrl;
+
+    // Eşleşen TRT tanımını bul
+    const def = TRT_FONT_DEFS.find(d => d.file.toLowerCase() === file.name.toLowerCase());
+    if (def) {
+      // @font-face enjekte et
+      const face = `@font-face {
+        font-family: '${def.name}';
+        src: url('${dataUrl}') format('${ext === 'otf' ? 'opentype' : ext === 'ttf' ? 'truetype' : 'woff2'}');
+        font-weight: ${def.weight};
+        font-style: ${def.style};
+      }`;
+      fontStyleEl.textContent += face;
+
+      // FONTS listesine ekle (tekrar ekleme kontrolü)
+      if (!FONTS.find(f => f.name === def.name)) {
+        FONTS.push({ name: def.name, label: def.name, dataUrl });
+      }
+    }
+  }
+
+  // Badge listesi güncelle
+  updateFontBadges();
+  // Font listelerini yeniden çiz
+  buildFontLists();
+  // Eğer henüz seçili font yoksa ilk yüklenen fontu seç
+  if (FONTS.length > 0) {
+    if (!FONTS.find(f => f.name === fs.qFont))   { fs.qFont   = FONTS[0].name; }
+    if (!FONTS.find(f => f.name === fs.optFont))  { fs.optFont = FONTS[0].name; }
+    saveFonts(); applyFonts(); updateBadge();
+  }
+}
+
+function updateFontBadges() {
+  const container = document.getElementById('loadedFontBadges');
+  const count     = document.getElementById('loadedFontCount');
+  const loaded    = TRT_FONT_DEFS.filter(d => loadedFonts[d.file]);
+  count.textContent = `${loaded.length} / 8`;
+
+  container.innerHTML = loaded.map(d =>
+    `<span class="trt-badge"><i class="bi bi-check-circle-fill text-success"></i>${d.name.replace('TRT ','')}</span>`
+  ).join('');
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload  = e => res(e.target.result.split(',')[1]);
+    fr.onerror = rej;
+    fr.readAsDataURL(file);
+  });
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+let questions = JSON.parse(localStorage.getItem('pro_questions')) || [];
+let savedBg   = localStorage.getItem('pro_bg') || '';
+let editingIdx = null;
+let dlMethod   = 'single';
+let correctVal = '';
+
+let fs = JSON.parse(localStorage.getItem('pro_fonts2') || 'null') || {
+  qFont:'TRT Bold', qItalic:false, qBold:true,  qSize:52,
+  optFont:'TRT Regular', optItalic:false, optBold:true, optSize:30
 };
 
-// Dogru Sik Secici
-// Secili: btn-success (yesil) | Digerleri: btn-light | Canli onizlemede de guncellenir
-function setCorrect(val){
-  correctVal=val;
-  document.querySelectorAll('#correctBtnGroup .btn').forEach(btn=>{
-    const bVal=btn.dataset.val;
+// ─── Doğru Şık ───────────────────────────────────────────────────────────────
+function setCorrect(val) {
+  correctVal = val;
+  document.querySelectorAll('#correctBtnGroup .btn').forEach(btn => {
+    const bVal = btn.dataset.val;
     btn.classList.remove('btn-light','btn-success','active');
-    if(bVal===val){
-      btn.classList.add(val===''?'btn-light':'btn-success','active');
-    } else {
-      btn.classList.add('btn-light');
-    }
+    btn.classList.add(bVal === val ? (val === '' ? 'btn-light' : 'btn-success') : 'btn-light');
+    if (bVal === val) btn.classList.add('active');
   });
-  ['a','b','c','d'].forEach(l=>{
-    const box=document.getElementById('live-box-'+l);
+  ['a','b','c','d'].forEach(l => {
+    const box = document.getElementById('live-box-'+l);
     box.classList.remove('correct','light-mode');
-    if(val!==''&&l===val) box.classList.add('correct');
-    else box.classList.add('light-mode');
+    box.classList.add(val !== '' && l === val ? 'correct' : 'light-mode');
   });
 }
 setCorrect('');
 
-// Font Sistemi
-function buildFontLists(){
-  ['q','opt'].forEach(t=>{
-    document.getElementById(t+'FontList').innerHTML=FONTS.map(f=>`
-      <div class="font-opt ${fs[t+'Font']===f.name?'active':''}" data-font="${f.name}"
+// ─── Font Sistemi ─────────────────────────────────────────────────────────────
+function buildFontLists() {
+  ['q','opt'].forEach(t => {
+    if (!FONTS.length) {
+      document.getElementById(t+'FontList').innerHTML =
+        `<div class="text-muted small p-2 text-center">
+           <i class="bi bi-info-circle me-1"></i>
+           Önce TRT font dosyalarını yükleyin
+         </div>`;
+      return;
+    }
+    document.getElementById(t+'FontList').innerHTML = FONTS.map(f => `
+      <div class="font-opt ${fs[t+'Font'] === f.name ? 'active' : ''}" data-font="${f.name}"
            style="font-family:'${f.name}'" onclick="selectFont('${t}','${f.name}',this)">
         <span class="pchar" style="font-family:'${f.name}'">Aa</span>${f.label}
       </div>`).join('');
   });
 }
-function selectFont(t,name,el){
-  fs[t+'Font']=name;
-  el.closest('.font-list').querySelectorAll('.font-opt').forEach(e=>e.classList.remove('active'));
+
+function selectFont(t, name, el) {
+  fs[t+'Font'] = name;
+  el.closest('.font-list').querySelectorAll('.font-opt').forEach(e => e.classList.remove('active'));
   el.classList.add('active');
-  saveFonts();applyFonts();updateBadge();
+  saveFonts(); applyFonts(); updateBadge();
 }
-function toggleStyle(t,style){
-  const k=t+(style==='italic'?'Italic':'Bold');
-  fs[k]=!fs[k];
-  const btnId=t+(style==='italic'?'ItalicBtn':'BoldBtn');
-  const btn=document.getElementById(btnId);
-  if(fs[k]){
+
+function toggleStyle(t, style) {
+  const k   = t + (style === 'italic' ? 'Italic' : 'Bold');
+  fs[k]     = !fs[k];
+  const btn = document.getElementById(t + (style === 'italic' ? 'ItalicBtn' : 'BoldBtn'));
+  if (fs[k]) {
     btn.classList.remove('btn-outline-primary','btn-outline-secondary');
-    btn.classList.add(style==='bold'?'btn-primary':'btn-secondary');
+    btn.classList.add(style === 'bold' ? 'btn-primary' : 'btn-secondary');
   } else {
     btn.classList.remove('btn-primary','btn-secondary');
-    btn.classList.add(style==='bold'?'btn-outline-primary':'btn-outline-secondary');
+    btn.classList.add(style === 'bold' ? 'btn-outline-primary' : 'btn-outline-secondary');
   }
-  saveFonts();applyFonts();
+  saveFonts(); applyFonts();
 }
-function onSizeChange(t){
-  const v=parseInt(document.getElementById(t+'SizeSlider').value);
-  fs[t+'Size']=v;
-  document.getElementById(t+'SizeVal').innerText=v+'px';
-  saveFonts();applyFonts();updateBadge();
-}
-function updateBadge(){
-  document.getElementById('badgeQFont').innerText=fs.qFont;
-  document.getElementById('badgeQSize').innerText=fs.qSize+'px';
-  document.getElementById('badgeOptFont').innerText=fs.optFont;
-  document.getElementById('badgeOptSize').innerText=fs.optSize+'px';
-}
-function applyFonts(){
-  const qFam="'"+fs.qFont+"',sans-serif";
-  const oFam="'"+fs.optFont+"',sans-serif";
-  const previewW=document.querySelector('.preview-wrapper')?.offsetWidth||800;
-  const scale=previewW/1920;
-  const qPx=(fs.qSize*scale).toFixed(1)+'px';
-  const oPx=(fs.optSize*scale).toFixed(1)+'px';
-  const qSt=fs.qItalic?'italic':'normal';const qW=fs.qBold?'900':'400';
-  const oSt=fs.optItalic?'italic':'normal';const oW=fs.optBold?'700':'400';
-  const lq=document.getElementById('liveQ');
-  lq.style.cssText+=`;font-family:${qFam};font-size:${qPx};font-style:${qSt};font-weight:${qW};`;
-  ['liveA','liveB','liveC','liveD'].forEach(id=>{
-    const e=document.getElementById(id);
-    e.style.cssText+=`;font-family:${oFam};font-size:${oPx};font-style:${oSt};font-weight:${oW};`;
-  });
-  const rq=document.getElementById('r-q');
-  rq.style.fontFamily=qFam;rq.style.fontSize=fs.qSize+'px';rq.style.fontStyle=qSt;rq.style.fontWeight=qW;
-  ['r-a','r-b','r-c','r-d'].forEach(id=>{
-    const e=document.getElementById(id);
-    e.style.fontFamily=oFam;e.style.fontSize=fs.optSize+'px';e.style.fontStyle=oSt;e.style.fontWeight=oW;
-  });
-}
-function restoreFontUI(){
-  document.getElementById('qSizeSlider').value=fs.qSize;
-  document.getElementById('qSizeVal').innerText=fs.qSize+'px';
-  document.getElementById('optSizeSlider').value=fs.optSize;
-  document.getElementById('optSizeVal').innerText=fs.optSize+'px';
-  ['q','opt'].forEach(t=>{
-    const bb=document.getElementById(t+'BoldBtn');
-    const ib=document.getElementById(t+'ItalicBtn');
-    if(fs[t+'Bold']){bb.classList.remove('btn-outline-primary');bb.classList.add('btn-primary');}
-    if(fs[t+'Italic']){ib.classList.remove('btn-outline-secondary');ib.classList.add('btn-secondary');}
-  });
-  updateBadge();applyFonts();
-}
-function saveFonts(){localStorage.setItem('pro_fonts2',JSON.stringify(fs));}
 
-// Arka Plan
-function applyBg(src){
-  savedBg=src;
-  document.getElementById('liveEditor').style.backgroundImage=`url(${src})`;
-  document.getElementById('render-box').style.backgroundImage=`url(${src})`;
+function onSizeChange(t) {
+  const v = parseInt(document.getElementById(t+'SizeSlider').value);
+  fs[t+'Size'] = v;
+  document.getElementById(t+'SizeVal').innerText = v+'px';
+  saveFonts(); applyFonts(); updateBadge();
 }
-async function loadBgAsBase64(url){
-  try{
-    const res=await fetch(url,{cache:'force-cache'});
-    const blob=await res.blob();
-    return new Promise(r=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.readAsDataURL(blob);});
-  }catch(e){return null;}
+
+function updateBadge() {
+  document.getElementById('badgeQFont').innerText   = fs.qFont   || '—';
+  document.getElementById('badgeQSize').innerText   = fs.qSize   + 'px';
+  document.getElementById('badgeOptFont').innerText = fs.optFont || '—';
+  document.getElementById('badgeOptSize').innerText = fs.optSize + 'px';
 }
-if(savedBg){applyBg(savedBg);}
-else{loadBgAsBase64('background.jpg').then(b64=>{if(b64){localStorage.setItem('pro_bg',b64);applyBg(b64);}});}
-function handleBg(input){
-  const fr=new FileReader();
-  fr.onload=e=>{localStorage.setItem('pro_bg',e.target.result);applyBg(e.target.result);};
+
+function applyFonts() {
+  if (!FONTS.length) return;
+  const qFam  = `'${fs.qFont}',sans-serif`;
+  const oFam  = `'${fs.optFont}',sans-serif`;
+  const previewW = document.querySelector('.preview-wrapper')?.offsetWidth || 800;
+  const scale = previewW / 1920;
+  const qPx   = (fs.qSize  * scale).toFixed(1) + 'px';
+  const oPx   = (fs.optSize * scale).toFixed(1) + 'px';
+  const qSt   = fs.qItalic   ? 'italic' : 'normal';
+  const qW    = fs.qBold     ? '900'    : '400';
+  const oSt   = fs.optItalic ? 'italic' : 'normal';
+  const oW    = fs.optBold   ? '700'    : '400';
+
+  const lq = document.getElementById('liveQ');
+  lq.style.cssText += `;font-family:${qFam};font-size:${qPx};font-style:${qSt};font-weight:${qW};`;
+  ['liveA','liveB','liveC','liveD'].forEach(id => {
+    const e = document.getElementById(id);
+    e.style.cssText += `;font-family:${oFam};font-size:${oPx};font-style:${oSt};font-weight:${oW};`;
+  });
+
+  // Render alanı
+  const rq = document.getElementById('r-q');
+  rq.style.fontFamily = qFam; rq.style.fontSize = fs.qSize+'px';
+  rq.style.fontStyle  = qSt;  rq.style.fontWeight = qW;
+  ['r-a','r-b','r-c','r-d'].forEach(id => {
+    const e = document.getElementById(id);
+    e.style.fontFamily = oFam; e.style.fontSize = fs.optSize+'px';
+    e.style.fontStyle  = oSt;  e.style.fontWeight = oW;
+  });
+}
+
+function restoreFontUI() {
+  document.getElementById('qSizeSlider').value   = fs.qSize;
+  document.getElementById('qSizeVal').innerText  = fs.qSize   + 'px';
+  document.getElementById('optSizeSlider').value = fs.optSize;
+  document.getElementById('optSizeVal').innerText = fs.optSize + 'px';
+  ['q','opt'].forEach(t => {
+    const bb = document.getElementById(t+'BoldBtn');
+    const ib = document.getElementById(t+'ItalicBtn');
+    if (fs[t+'Bold'])   { bb.classList.remove('btn-outline-primary'); bb.classList.add('btn-primary'); }
+    if (fs[t+'Italic']) { ib.classList.remove('btn-outline-secondary'); ib.classList.add('btn-secondary'); }
+  });
+  updateBadge();
+}
+
+function saveFonts() { localStorage.setItem('pro_fonts2', JSON.stringify(fs)); }
+
+// ─── Arka Plan ────────────────────────────────────────────────────────────────
+function applyBg(src) {
+  savedBg = src;
+  document.getElementById('liveEditor').style.backgroundImage  = `url(${src})`;
+  document.getElementById('render-box').style.backgroundImage  = `url(${src})`;
+}
+async function loadBgAsBase64(url) {
+  try {
+    const res = await fetch(url, {cache:'force-cache'});
+    const blob = await res.blob();
+    return new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(blob); });
+  } catch(e) { return null; }
+}
+if (savedBg) { applyBg(savedBg); }
+else { loadBgAsBase64('background.jpg').then(b64 => { if(b64) { localStorage.setItem('pro_bg',b64); applyBg(b64); } }); }
+function handleBg(input) {
+  const fr = new FileReader();
+  fr.onload = e => { localStorage.setItem('pro_bg', e.target.result); applyBg(e.target.result); };
   fr.readAsDataURL(input.files[0]);
 }
 
-// Indirme Yontemi
-function setDlMethod(v){
-  dlMethod=v;
-  const el=document.getElementById('dlLabel');
-  if(v==='zip'){el.innerText='📦 ZIP';el.className='badge bg-warning text-dark';}
-  else{el.innerText='📄 Tek tek';el.className='badge bg-primary';}
+// ─── İndirme ──────────────────────────────────────────────────────────────────
+function setDlMethod(v) {
+  dlMethod = v;
+  const el = document.getElementById('dlLabel');
+  if (v === 'zip') { el.innerText='📦 ZIP'; el.className='badge bg-warning text-dark'; }
+  else             { el.innerText='📄 Tek tek'; el.className='badge bg-primary'; }
 }
 
-// Progress
-function setProgress(p,t){
-  document.getElementById('progressFill').style.width=p+'%';
-  document.getElementById('progressText').innerText=t;
+// ─── Progress ─────────────────────────────────────────────────────────────────
+function setProgress(p,t) {
+  document.getElementById('progressFill').style.width = p+'%';
+  document.getElementById('progressText').innerText   = t;
 }
-function showProgress(s){document.getElementById('progressOverlay').classList.toggle('active',s);}
+function showProgress(s) { document.getElementById('progressOverlay').classList.toggle('active',s); }
 
-// Form
-const getEd=id=>document.getElementById(id).innerText.trim();
-const setEd=(id,v)=>document.getElementById(id).innerText=v||'';
-function clearForm(){['liveQ','liveA','liveB','liveC','liveD'].forEach(id=>setEd(id,''));setCorrect('');}
-function getFormData(){return{Soru:getEd('liveQ'),A:getEd('liveA'),B:getEd('liveB'),C:getEd('liveC'),D:getEd('liveD'),Dogru:correctVal};}
-function setEditMode(on){
-  document.getElementById('saveBtn').style.display=on?'none':'inline-flex';
-  document.getElementById('updateBtn').style.display=on?'inline-flex':'none';
-  document.getElementById('cancelBtn').style.display=on?'inline-flex':'none';
+// ─── Form ─────────────────────────────────────────────────────────────────────
+const getEd = id => document.getElementById(id).innerText.trim();
+const setEd = (id,v) => document.getElementById(id).innerText = v||'';
+function clearForm() { ['liveQ','liveA','liveB','liveC','liveD'].forEach(id => setEd(id,'')); setCorrect(''); }
+function getFormData() { return { Soru:getEd('liveQ'),A:getEd('liveA'),B:getEd('liveB'),C:getEd('liveC'),D:getEd('liveD'),Dogru:correctVal }; }
+function setEditMode(on) {
+  document.getElementById('saveBtn').style.display   = on ? 'none'        : 'inline-flex';
+  document.getElementById('updateBtn').style.display = on ? 'inline-flex' : 'none';
+  document.getElementById('cancelBtn').style.display = on ? 'inline-flex' : 'none';
 }
-function saveNew(){const q=getFormData();if(!q.Soru)return alert('Soru bos!');questions.push(q);save();clearForm();}
-function doUpdate(){if(editingIdx===null)return;const q=getFormData();if(!q.Soru)return alert('Soru bos!');questions[editingIdx]=q;editingIdx=null;setEditMode(false);save();clearForm();}
-function cancelEdit(){editingIdx=null;setEditMode(false);clearForm();}
-function editQ(i){
-  editingIdx=i;const q=questions[i];
-  setEd('liveQ',q.Soru);setEd('liveA',q.A);setEd('liveB',q.B);setEd('liveC',q.C);setEd('liveD',q.D);
+function saveNew()   { const q=getFormData(); if(!q.Soru) return alert('Soru bos!'); questions.push(q); save(); clearForm(); }
+function doUpdate()  { if(editingIdx===null) return; const q=getFormData(); if(!q.Soru) return alert('Soru bos!'); questions[editingIdx]=q; editingIdx=null; setEditMode(false); save(); clearForm(); }
+function cancelEdit(){ editingIdx=null; setEditMode(false); clearForm(); }
+function editQ(i)    {
+  editingIdx=i; const q=questions[i];
+  setEd('liveQ',q.Soru); setEd('liveA',q.A); setEd('liveB',q.B); setEd('liveC',q.C); setEd('liveD',q.D);
   setCorrect((q.Dogru||'').toLowerCase());
-  setEditMode(true);window.scrollTo({top:0,behavior:'smooth'});
+  setEditMode(true); window.scrollTo({top:0,behavior:'smooth'});
 }
-function deleteQ(i){if(confirm('Silinsin mi?')){questions.splice(i,1);save();}}
-function toggleAll(src){document.querySelectorAll('.sel-q').forEach(cb=>cb.checked=src.checked);}
-function clearAll(){if(confirm('Tum sorular silinecek!')){questions=[];save();}}
-function save(){localStorage.setItem('pro_questions',JSON.stringify(questions));renderTable();}
+function deleteQ(i)  { if(confirm('Silinsin mi?')) { questions.splice(i,1); save(); } }
+function toggleAll(src) { document.querySelectorAll('.sel-q').forEach(cb => cb.checked=src.checked); }
+function clearAll()  { if(confirm('Tum sorular silinecek!')) { questions=[]; save(); } }
+function save()      { localStorage.setItem('pro_questions',JSON.stringify(questions)); renderTable(); }
 
-function renderTable(){
-  document.getElementById('listBody').innerHTML=questions.map((q,i)=>`
+function renderTable() {
+  document.getElementById('listBody').innerHTML = questions.map((q,i) => `
     <tr class="q-row">
       <td><input type="checkbox" class="form-check-input sel-q" data-idx="${i}" onclick="event.stopPropagation()"></td>
-      <td onclick="editQ(${i})" title="Duzenle">
-        ${(q.Soru||'').substring(0,110)}${(q.Soru||'').length>110?'...':''}
-      </td>
+      <td onclick="editQ(${i})" title="Duzenle">${(q.Soru||'').substring(0,110)}${(q.Soru||'').length>110?'...':''}</td>
       <td class="text-center">
-        ${q.Dogru
-          ? '<span class="badge bg-success">'+q.Dogru.toUpperCase()+'</span>'
-          : '<span class="badge bg-secondary">?</span>'}
+        ${q.Dogru ? '<span class="badge bg-success">'+q.Dogru.toUpperCase()+'</span>' : '<span class="badge bg-secondary">?</span>'}
       </td>
       <td class="text-end">
-        <button class="btn btn-outline-info btn-sm me-1" title="Duzenle" onclick="event.stopPropagation();editQ(${i})">
-          <i class="bi bi-pencil"></i>
-        </button>
-        <button class="btn btn-danger btn-sm" title="Sil" onclick="event.stopPropagation();deleteQ(${i})">
-          <i class="bi bi-trash3"></i>
-        </button>
+        <button class="btn btn-outline-info btn-sm me-1" onclick="event.stopPropagation();editQ(${i})"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteQ(${i})"><i class="bi bi-trash3"></i></button>
       </td>
     </tr>`).join('');
 }
 
-function importExcel(input){
-  const fr=new FileReader();
-  fr.onload=e=>{
-    const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-    questions=[...questions,...XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]])];
+function importExcel(input) {
+  const fr = new FileReader();
+  fr.onload = e => {
+    const wb = XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+    questions = [...questions, ...XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]])];
     save();
   };
   fr.readAsArrayBuffer(input.files[0]);
 }
-function exportToExcel(){
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(questions),'Sorular');
+function exportToExcel() {
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(questions), 'Sorular');
   XLSX.writeFile(wb,'Yedek_Sorular.xlsx');
 }
 
-// Render
-function updateRender(q,isCorr){
-  document.getElementById('r-q').innerText=q.Soru||'';
-  ['a','b','c','d'].forEach(l=>document.getElementById('r-'+l).innerText=q[l.toUpperCase()]||'');
-  ['a','b','c','d'].forEach(l=>{
-    const el=document.getElementById('box-'+l);
-    el.style.borderColor='#adb5bd';el.style.background='#f8f9fa';
-    el.querySelector('div:first-child').style.color='#000';
-    el.querySelector('div:first-child').style.borderColor='#000';
-    el.querySelector('div:last-child').style.color='#000';
+// ─── Render ───────────────────────────────────────────────────────────────────
+function updateRender(q, isCorr) {
+  document.getElementById('r-q').innerText = q.Soru||'';
+  ['a','b','c','d'].forEach(l => document.getElementById('r-'+l).innerText = q[l.toUpperCase()]||'');
+
+  ['a','b','c','d'].forEach(l => {
+    const el = document.getElementById('box-'+l);
+    el.style.borderColor = '#adb5bd'; el.style.background = '#f8f9fa';
+    el.querySelector('div:first-child').style.color       = '#000';
+    el.querySelector('div:first-child').style.borderColor = '#000';
+    el.querySelector('div:last-child').style.color        = '#000';
   });
-  if(isCorr&&q.Dogru){
-    const el=document.getElementById('box-'+q.Dogru.toLowerCase());
-    if(el){
-      el.style.borderColor='#0d4f30';
-el.style.background='#146c43';
-const circle=el.querySelector('div:first-child');
-circle.style.color='#fff';
-circle.style.borderColor='#fff';
-el.querySelector('div:last-child').style.color='#fff';
+
+  if (isCorr && q.Dogru) {
+    const el = document.getElementById('box-'+q.Dogru.toLowerCase());
+    if (el) {
+      el.style.borderColor = '#fff';
+      el.style.background  = '#146c43';
+      const circle = el.querySelector('div:first-child');
+      circle.style.color       = '#fff';
+      circle.style.borderColor = '#fff';
+      el.querySelector('div:last-child').style.color = '#fff';
     }
   }
   applyFonts();
 }
 
-// Dosya adi uretici
-// Normal hal  : (Soru N) soru metni.jpg
-// Cevapli hal : (Cevap X) soru metni.jpg
-function sanitize(str){return(str||'').replace(/[\\/:*?"<>|]/g,'').trim();}
-function makeFileName(q,soruNo,isCorr,ext){
-  const metin=sanitize(q.Soru).substring(0,40);
-  if(isCorr){
-    return '(Cevap '+soruNo+') '+metin+'.'+ext;
-  } else {
-    return '(Soru '+soruNo+') '+metin+'.'+ext;
-  }
+function sanitize(str) { return (str||'').replace(/[\\/:*?"<>|]/g,'').trim(); }
+function makeFileName(q, soruNo, isCorr, ext) {
+  const metin = sanitize(q.Soru).substring(0,40);
+  return isCorr ? `(Cevap ${soruNo}) ${metin}.${ext}` : `(Soru ${soruNo}) ${metin}.${ext}`;
 }
 
-// Islemci
-// Secilen kutucuklar secim sirasina gore numaralanir (1,2,3...)
-// Listede 5. ve 6. siraki sorulari secseniz bile "Soru 1" ve "Soru 2" olarak indirilir
-async function processAll(type){
-  const sel=Array.from(document.querySelectorAll('.sel-q:checked'));
-  if(!sel.length)return alert('En az bir soru secin!');
+async function processAll(type) {
+  const sel = Array.from(document.querySelectorAll('.sel-q:checked'));
+  if (!sel.length) return alert('En az bir soru secin!');
   showProgress(true);
-  const zip=new JSZip();
-  const dlMode=document.getElementById('downloadMode').value;
-  const w=parseInt(document.getElementById('wI').value)||1920;
-  const h=parseInt(document.getElementById('hI').value)||1080;
-  const dur=parseInt(document.getElementById('vidDuration').value)||5;
+  const zip    = new JSZip();
+  const dlMode = document.getElementById('downloadMode').value;
+  const w      = parseInt(document.getElementById('wI').value)||1920;
+  const h      = parseInt(document.getElementById('hI').value)||1080;
+  const dur    = parseInt(document.getElementById('vidDuration').value)||5;
+  const doImg  = (type==='image'||type==='both');
+  const doVid  = (type==='video'||type==='both');
 
-  const doImg=(type==='image'||type==='both');
-  const doVid=(type==='video'||type==='both');
+  let perQ = 0;
+  if (dlMode==='both') perQ = (doImg?2:0)+(doVid?2:0);
+  else                 perQ = (doImg?1:0)+(doVid?1:0);
+  const total = sel.length * perQ || 1;
+  let done = 0;
 
-  let perQ=0;
-  if(dlMode==='both') perQ=(doImg?2:0)+(doVid?2:0);
-  else perQ=(doImg?1:0)+(doVid?1:0);
-  const total=sel.length*perQ||1;
-  let done=0;
+  for (let si=0; si<sel.length; si++) {
+    const chk    = sel[si];
+    const q      = questions[chk.dataset.idx];
+    const soruNo = si+1;
 
-  for(let si=0;si<sel.length;si++){
-    const chk=sel[si];
-    const q=questions[chk.dataset.idx];
-    const soruNo=si+1; // secim sirasina gore numaralandirma
-
-    const run=async(isCorr)=>{
-      const label=isCorr?'cevapli':'soru';
-      setProgress(Math.round(done/total*95),'Isleniyor: Soru '+soruNo+' ('+label+')...');
-      updateRender(q,isCorr);
+    const run = async (isCorr) => {
+      const label = isCorr ? 'cevapli' : 'soru';
+      setProgress(Math.round(done/total*95), 'Isleniyor: Soru '+soruNo+' ('+label+')...');
+      updateRender(q, isCorr);
       await sleep(300);
 
-      if(doImg){
-        const cv=await html2canvas(document.getElementById('render-box'),{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});
-        const blob=await canvasToBlob(cv,'image/jpeg',.95);
-        const fName=makeFileName(q,soruNo,isCorr,'jpg');
-        if(dlMethod==='zip')zip.file(fName,blob);else downloadBlob(blob,fName);
+      if (doImg) {
+        const cv   = await html2canvas(document.getElementById('render-box'),{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});
+        const blob = await canvasToBlob(cv,'image/jpeg',.95);
+        const fName = makeFileName(q,soruNo,isCorr,'jpg');
+        if (dlMethod==='zip') zip.file(fName,blob); else downloadBlob(blob,fName);
         done++;
       }
-      if(doVid){
-        const blob=await renderMp4(document.getElementById('render-box'),w,h,dur);
-        const fName=makeFileName(q,soruNo,isCorr,'mp4');
-        if(dlMethod==='zip')zip.file(fName,blob);else downloadBlob(blob,fName);
+      if (doVid) {
+        const blob  = await renderMp4(document.getElementById('render-box'),w,h,dur);
+        const fName = makeFileName(q,soruNo,isCorr,'mp4');
+        if (dlMethod==='zip') zip.file(fName,blob); else downloadBlob(blob,fName);
         done++;
       }
     };
 
-    if(dlMode==='onlyQ'||dlMode==='both') await run(false);
-    if(dlMode==='onlyA'||dlMode==='both') await run(true);
+    if (dlMode==='onlyQ'||dlMode==='both') await run(false);
+    if (dlMode==='onlyA'||dlMode==='both') await run(true);
   }
 
-  if(dlMethod==='zip'){
+  if (dlMethod==='zip') {
     setProgress(98,'ZIP hazirlaniyor...');
-    downloadBlob(await zip.generateAsync({type:'blob'}),'Export_'+type+'.zip');
+    downloadBlob(await zip.generateAsync({type:'blob'}), 'Export_'+type+'.zip');
   }
   showProgress(false);
 }
 
-function downloadBlob(blob,name){
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=name;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+function downloadBlob(blob, name) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
 }
-const canvasToBlob=(c,t,q)=>new Promise(r=>c.toBlob(r,t,q));
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const canvasToBlob = (c,t,q) => new Promise(r => c.toBlob(r,t,q));
+const sleep        = ms      => new Promise(r => setTimeout(r,ms));
 
-async function renderMp4(element,w,h,durationSec){
-  if(typeof VideoEncoder==='undefined') return renderWebmFallback(element,w,h,durationSec*1000);
-  const src=await html2canvas(element,{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});
-  const{Muxer,ArrayBufferTarget}=Mp4Muxer;
-  const target=new ArrayBufferTarget();
-  const muxer=new Muxer({target,video:{codec:'avc',width:w,height:h},fastStart:'in-memory'});
-  const fps=30,tot=durationSec*fps,dur=Math.round(1_000_000/fps);
-  const enc=new VideoEncoder({output:(chunk,meta)=>muxer.addVideoChunk(chunk,meta),error:e=>console.error(e)});
+async function renderMp4(element,w,h,durationSec) {
+  if (typeof VideoEncoder==='undefined') return renderWebmFallback(element,w,h,durationSec*1000);
+  const src = await html2canvas(element,{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});
+  const {Muxer,ArrayBufferTarget} = Mp4Muxer;
+  const target = new ArrayBufferTarget();
+  const muxer  = new Muxer({target,video:{codec:'avc',width:w,height:h},fastStart:'in-memory'});
+  const fps=30, tot=durationSec*fps, dur=Math.round(1_000_000/fps);
+  const enc = new VideoEncoder({output:(chunk,meta)=>muxer.addVideoChunk(chunk,meta),error:e=>console.error(e)});
   enc.configure({codec:'avc1.42001f',width:w,height:h,bitrate:8_000_000,framerate:fps});
-  const off=document.createElement('canvas');off.width=w;off.height=h;
-  const ctx=off.getContext('2d');
-  for(let i=0;i<tot;i++){
+  const off = document.createElement('canvas'); off.width=w; off.height=h;
+  const ctx = off.getContext('2d');
+  for (let i=0; i<tot; i++) {
     ctx.drawImage(src,0,0,w,h);
-    const vf=new VideoFrame(off,{timestamp:i*dur,duration:dur});
-    enc.encode(vf,{keyFrame:i%(fps*2)===0});
-    vf.close();
-    if(i%fps===0) await sleep(0);
+    const vf = new VideoFrame(off,{timestamp:i*dur,duration:dur});
+    enc.encode(vf,{keyFrame:i%(fps*2)===0}); vf.close();
+    if (i%fps===0) await sleep(0);
   }
-  await enc.flush();muxer.finalize();
+  await enc.flush(); muxer.finalize();
   return new Blob([target.buffer],{type:'video/mp4'});
 }
 
-function renderWebmFallback(element,w,h,durationMs){
-  return new Promise(async(resolve,reject)=>{
-    const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
-    if(!mime) return reject(new Error('Video desteklenmiyor'));
-    const src=await html2canvas(element,{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});
-    const wc=document.getElementById('video-canvas');wc.width=w;wc.height=h;
-    const ctx=wc.getContext('2d');ctx.drawImage(src,0,0,w,h);
-    const stream=wc.captureStream(30);
-    const rec=new MediaRecorder(stream,{mimeType:mime});
-    const chunks=[];
-    rec.ondataavailable=e=>{if(e.data?.size>0)chunks.push(e.data);};
-    rec.onstop=()=>{stream.getTracks().forEach(t=>t.stop());resolve(new Blob(chunks,{type:mime}));};
-    rec.onerror=reject;rec.start();
-    let cnt=0,last=performance.now(),tot=Math.ceil((durationMs/1000)*30);
-    function tick(now){
-      if(now-last>=33){ctx.drawImage(src,0,0,w,h);ctx.fillStyle='rgba(0,0,0,0.003)';ctx.fillRect(0,0,1,1);last=now;cnt++;}
-      if(cnt<tot) requestAnimationFrame(tick);else rec.stop();
+function renderWebmFallback(element,w,h,durationMs) {
+  return new Promise(async (resolve,reject) => {
+    const mime = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+    if (!mime) return reject(new Error('Video desteklenmiyor'));
+    const src = await html2canvas(element,{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});
+    const wc  = document.getElementById('video-canvas'); wc.width=w; wc.height=h;
+    const ctx = wc.getContext('2d'); ctx.drawImage(src,0,0,w,h);
+    const stream = wc.captureStream(30);
+    const rec    = new MediaRecorder(stream,{mimeType:mime});
+    const chunks = [];
+    rec.ondataavailable = e => { if(e.data?.size>0) chunks.push(e.data); };
+    rec.onstop    = () => { stream.getTracks().forEach(t=>t.stop()); resolve(new Blob(chunks,{type:mime})); };
+    rec.onerror   = reject; rec.start();
+    let cnt=0, last=performance.now(), tot=Math.ceil((durationMs/1000)*30);
+    function tick(now) {
+      if (now-last>=33) { ctx.drawImage(src,0,0,w,h); ctx.fillStyle='rgba(0,0,0,0.003)'; ctx.fillRect(0,0,1,1); last=now; cnt++; }
+      if (cnt<tot) requestAnimationFrame(tick); else rec.stop();
     }
     requestAnimationFrame(tick);
   });
 }
 
+// ─── Init ─────────────────────────────────────────────────────────────────────
 buildFontLists();
 restoreFontUI();
 renderTable();
-window.addEventListener('resize',applyFonts);
+window.addEventListener('resize', applyFonts);
 </script>
 </body>
 </html>
