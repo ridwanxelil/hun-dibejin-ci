@@ -2,506 +2,467 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Pro Soru Stüdyosu v8</title>
+    <title>Pro Soru Stüdyosu v12</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <!-- mp4-muxer: hafif, FFmpeg gerektirmez, saf JS MP4 yazıcı -->
     <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@latest/build/mp4-muxer.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:ital,wght@0,700;0,900;1,700;1,900&family=Oswald:wght@400;700&family=Bebas+Neue&family=Roboto+Condensed:ital,wght@0,700;1,700&family=Raleway:wght@700;900&family=Nunito:wght@700;900&family=Playfair+Display:ital,wght@0,700;1,700&family=Anton&family=Poppins:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #1e293b; --success: #22c55e; --accent: #6366f1; --danger: #ef4444; --pink: #ec4899; }
-        body { font-family: 'Inter', sans-serif; background: #0f172a; margin: 0; padding: 20px; color: white; }
-        .main-container { max-width: 1400px; margin: auto; }
-        
-        .admin-panel { background: #1e293b; padding: 20px; border-radius: 20px; margin-bottom: 25px; display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 20px; border: 1px solid #334155; }
-        .panel-col { display: flex; flex-direction: column; gap: 10px; }
-        h3 { margin: 0; font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        :root{ --bg:#0f172a; --card:#1e293b; --border:#334155; --muted:#64748b; --text:#f1f5f9; --success:#22c55e; --accent:#6366f1; --danger:#ef4444; --pink:#ec4899; }
+        *{ box-sizing:border-box; }
+        body{ font-family:'Inter',sans-serif; background:var(--bg); margin:0; padding:20px; color:var(--text); }
+        .wrap{ max-width:1400px; margin:auto; display:flex; flex-direction:column; gap:14px; }
+        .top-bar{ display:grid; grid-template-columns:240px 1fr; gap:14px; align-items:start; }
+        .card{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:9px; }
+        .card-title{ font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; font-weight:700; margin:0 0 2px; }
+        .ep{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:14px 18px; display:flex; flex-direction:column; gap:10px; }
+        .ep-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .ep-lbl{ font-size:0.72rem; color:var(--muted); font-weight:700; min-width:110px; }
+        .sep{ height:1px; background:var(--border); }
+        .preview-wrapper{ width:100%; aspect-ratio:16/9; background:#000; border-radius:14px; overflow:hidden; border:2px solid var(--accent); box-shadow:0 10px 32px rgba(0,0,0,.5); }
+        .live-editor-container{ width:100%; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:5%; background-size:cover; background-position:center; }
+        .q-capsule{ background:#fff; width:85%; padding:2% 5%; border-radius:clamp(28px,5vw,60px); border:4px solid #1e293b; margin-bottom:3%; }
+        .q-editable{ background:transparent; width:100%; font-weight:900; color:#000; text-align:center; outline:none; min-height:1.2em; white-space:pre-wrap; word-break:break-word; overflow-wrap:break-word; }
+        .q-editable:empty:before{ content:attr(data-ph); color:#aaa; font-weight:400; }
+        .opt-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; width:85%; }
+        .opt-box{ background:#fff; border:3px solid #cbd5e1; border-radius:clamp(22px,4vw,50px); display:flex; align-items:flex-start; padding:1.2% 3%; min-height:55px; }
+        .opt-letter{ width:32px; height:32px; border:2px solid #000; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1vw; font-weight:900; margin-right:10px; color:#000; flex-shrink:0; margin-top:.2em; }
+        .opt-editable{ background:transparent; width:100%; font-weight:700; color:#000; outline:none; min-height:1.2em; white-space:pre-wrap; word-break:break-word; overflow-wrap:break-word; }
+        .opt-editable:empty:before{ content:attr(data-ph); color:#aaa; font-weight:400; }
+        .form-bar{ background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+        .form-bar label{ font-size:.8rem; color:var(--muted); white-space:nowrap; }
+        .btn{ padding:8px 14px; border:none; border-radius:8px; cursor:pointer; font-weight:700; font-size:.82rem; color:white; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; transition:opacity .15s; }
+        .btn:hover{ opacity:.82; }
+        .btn-g{ background:var(--success); } .btn-u{ background:#0ea5e9; }
+        .btn-p{ background:var(--accent); }  .btn-d{ background:var(--danger); }
+        .btn-v{ background:var(--pink); }    .btn-sl{ background:#475569; }
+        input[type=text],input[type=number],select{ background:#0f172a; color:white; border:1px solid var(--border); padding:7px 10px; border-radius:8px; font-size:.82rem; }
+        input[type=file]{ display:none; }
+        .file-btn{ padding:8px 12px; background:#0f172a; border:1px dashed var(--border); border-radius:8px; cursor:pointer; font-size:.79rem; color:var(--muted); display:inline-flex; align-items:center; gap:6px; transition:border-color .2s,color .2s; }
+        .file-btn:hover{ border-color:var(--accent); color:white; }
 
-        .preview-wrapper { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 15px; overflow: hidden; position: relative; border: 2px solid #4f46e5; margin-bottom: 25px; box-shadow: 0 15px 40px rgba(0,0,0,0.4); }
-        .live-editor-container { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 5%; box-sizing: border-box; background-size: cover; background-position: center; }
-        
-        .q-capsule { background: #ffffff; width: 85%; padding: 2% 5%; border-radius: 100px; border: 4px solid var(--primary); margin-bottom: 3%; }
-        .q-input-live { background: transparent; border: none; width: 100%; font-size: 2.2vw; font-weight: 900; color: #000; text-align: center; outline: none; }
-        
-        .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 85%; }
-        .opt-box { background: #ffffff; border: 3px solid #cbd5e1; border-radius: 100px; display: flex; align-items: center; padding: 1% 3%; min-height: 60px; }
-        .opt-letter { width: 35px; height: 35px; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1vw; font-weight: 900; margin-right: 12px; color: #000; flex-shrink: 0; }
-        .opt-input-live { background: transparent; border: none; width: 100%; font-size: 1.2vw; font-weight: 700; color: #000; outline: none; }
+        /* Universal dropdown */
+        .dd-wrap{ position:relative; display:inline-block; }
+        .dd-panel{ display:none; position:absolute; top:calc(100% + 8px); background:#1e293b; border:1px solid var(--border); border-radius:12px; z-index:400; box-shadow:0 14px 40px rgba(0,0,0,.7); }
+        .dd-panel.open{ display:block; }
+        .dd-list{ min-width:190px; padding:6px 0; }
+        .dd-list button{ display:block; width:100%; padding:10px 14px; background:none; border:none; color:white; text-align:left; cursor:pointer; font-size:.82rem; font-weight:600; }
+        .dd-list button:hover{ background:rgba(255,255,255,.08); }
 
-        .data-card { background: #1e293b; border-radius: 20px; padding: 20px; border: 1px solid #334155; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #334155; }
-        tr.q-row:hover { background: rgba(255,255,255,0.05); cursor: pointer; }
-        
-        .btn { padding: 10px 15px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-g { background: var(--success); }
-        .btn-p { background: var(--accent); }
-        .btn-d { background: var(--danger); }
-        .btn-v { background: var(--pink); }
-        
-        input, select { background: #0f172a; color: white; border: 1px solid #334155; padding: 8px; border-radius: 8px; }
+        /* Font dropdown panel */
+        .font-panel-inner{ padding:18px; width:520px; right:0; left:auto; }
+        .font-dd-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+        .fsec-title{ font-size:.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; font-weight:700; margin:0 0 8px; }
+        .font-list{ display:flex; flex-direction:column; gap:2px; max-height:200px; overflow-y:auto; }
+        .font-list::-webkit-scrollbar{ width:4px; } .font-list::-webkit-scrollbar-thumb{ background:#334155; border-radius:4px; }
+        .font-opt{ display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:8px; cursor:pointer; border:1px solid transparent; font-size:.84rem; font-weight:600; color:var(--text); background:transparent; transition:all .12s; }
+        .font-opt:hover{ background:rgba(255,255,255,.06); }
+        .font-opt.active{ background:rgba(99,102,241,.2); border-color:var(--accent); }
+        .font-opt .pchar{ font-size:1.05rem; width:26px; text-align:center; }
+        .style-row{ display:flex; gap:6px; margin-top:10px; }
+        .style-btn{ padding:5px 12px; border:1px solid var(--border); border-radius:7px; background:#0f172a; color:var(--text); cursor:pointer; font-size:.8rem; font-weight:700; transition:all .12s; }
+        .style-btn:hover{ border-color:var(--accent); }
+        .style-btn.active{ background:var(--accent); border-color:var(--accent); color:white; }
+        .size-row{ display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+        .size-row label{ font-size:.72rem; color:var(--muted); font-weight:700; min-width:55px; }
+        input[type=range]{ flex:1; accent-color:var(--accent); }
+        .size-val{ min-width:36px; text-align:center; font-size:.82rem; background:#0f172a; border:1px solid var(--border); border-radius:6px; padding:3px 6px; }
 
-        #progressOverlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0,0,0,0.85); z-index: 9999;
-            flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-        }
-        #progressOverlay.active { display: flex; }
-        #progressBar { width: 420px; height: 14px; background: #334155; border-radius: 999px; overflow: hidden; }
-        #progressFill { height: 100%; background: var(--pink); border-radius: 999px; transition: width 0.15s; width: 0%; }
-        #progressText { color: white; font-size: 0.95rem; }
+        .font-trigger{ display:inline-flex; align-items:center; gap:8px; padding:8px 14px; background:#0f172a; border:1px solid var(--border); border-radius:9px; cursor:pointer; font-size:.82rem; color:var(--text); transition:border-color .15s; white-space:nowrap; }
+        .font-trigger:hover{ border-color:var(--accent); }
+        .ft-name{ font-weight:700; max-width:90px; overflow:hidden; text-overflow:ellipsis; }
+        .ft-size{ color:var(--muted); font-size:.75rem; }
 
-        #render-stage {
-            position: fixed; left: -9999px; top: 0;
-            width: 1920px; height: 1080px;
-            pointer-events: none; visibility: visible;
-        }
-        #video-canvas { position: fixed; left: -9999px; top: 0; display: block; }
+        .data-card{ background:var(--card); border-radius:14px; padding:14px; border:1px solid var(--border); }
+        table{ width:100%; border-collapse:collapse; }
+        th,td{ padding:11px 14px; text-align:left; border-bottom:1px solid var(--border); font-size:.84rem; }
+        tr.q-row:hover{ background:rgba(255,255,255,.04); cursor:pointer; }
+        #progressOverlay{ display:none; position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:9999; flex-direction:column; align-items:center; justify-content:center; gap:14px; }
+        #progressOverlay.active{ display:flex; }
+        #progressBar{ width:420px; height:12px; background:var(--border); border-radius:999px; overflow:hidden; }
+        #progressFill{ height:100%; background:var(--pink); border-radius:999px; transition:width .15s; width:0%; }
+        #progressText{ font-size:.9rem; color:#94a3b8; }
+        #render-stage{ position:fixed; left:-9999px; top:0; pointer-events:none; visibility:visible; }
+        #video-canvas{ position:fixed; left:-9999px; top:0; display:block; }
+        #updateBtn{ display:none; } #updateBtn.visible{ display:inline-flex; }
     </style>
 </head>
 <body>
+<div id="progressOverlay"><div id="progressText">Hazırlanıyor...</div><div id="progressBar"><div id="progressFill"></div></div></div>
 
-<div id="progressOverlay">
-    <div id="progressText">Hazırlanıyor...</div>
-    <div id="progressBar"><div id="progressFill"></div></div>
-</div>
+<div class="wrap">
 
-<div class="main-container">
-    <div class="admin-panel">
-        <div class="panel-col">
-            <h3>📂 Veri & Excel</h3>
-            <button class="btn btn-p" onclick="document.getElementById('fileIn').click()">📥 Excel Yükle</button>
-            <button class="btn btn-p" onclick="exportToExcel()" style="background:#475569">📤 Excel Yedek</button>
-            <button class="btn btn-d" onclick="clearAll()">🗑 Temizle</button>
-            <input type="file" id="fileIn" hidden onchange="importExcel(this)">
+<!-- 1. Excel + Export -->
+<div class="top-bar">
+    <div class="card">
+        <p class="card-title">Veri & Excel</p>
+        <button class="btn btn-p" onclick="document.getElementById('fileIn').click()">Excel Yukle</button>
+        <button class="btn btn-sl" onclick="exportToExcel()">Excel Yedek</button>
+        <button class="btn btn-d" onclick="clearAll()">Tumunu Sil</button>
+        <input type="file" id="fileIn" onchange="importExcel(this)">
+    </div>
+    <div class="ep">
+        <p class="card-title" style="margin-bottom:2px;">Disa Aktar</p>
+        <div class="ep-row">
+            <span class="ep-lbl">Boyut</span>
+            <input type="number" id="wI" value="1920" style="width:78px;">
+            <span style="color:var(--muted);">x</span>
+            <input type="number" id="hI" value="1080" style="width:78px;">
+            <span style="font-size:.75rem;color:var(--muted);">px</span>
         </div>
-        
-        <div class="panel-col">
-            <h3>🎨 Tasarım Ayarları</h3>
-            <input type="file" id="bgInput" accept="image/*" onchange="handleBg(this)">
-            <div style="display:flex; gap:5px;">
-                <input type="number" id="wI" value="1920" style="width:50%" title="Genişlik">
-                <input type="number" id="hI" value="1080" style="width:50%" title="Yükseklik">
-            </div>
-            <select id="exportType">
-                <option value="zip">📦 Toplu İndir (ZIP)</option>
-                <option value="single">⬇️ Tek Tek İndir</option>
-            </select>
-        </div>
-
-        <div class="panel-col">
-            <h3>⚙️ Kayıt & Dışa Aktar</h3>
-            <div style="display:flex; gap:5px;">
-                <select id="inCorrect" style="flex:1;">
-                    <option value="">Cevap?</option>
-                    <option value="a">A</option><option value="b">B</option>
-                    <option value="c">C</option><option value="d">D</option>
-                </select>
-                <button class="btn btn-g" onclick="addOrUpdate()" id="saveBtn">✅ Kaydet</button>
-            </div>
-            <select id="downloadMode">
-                <option value="both">Soru + Cevaplı</option>
+        <div class="sep"></div>
+        <div class="ep-row">
+            <span class="ep-lbl">Icerik</span>
+            <select id="downloadMode" style="flex:1;max-width:190px;">
+                <option value="both">Soru + Cevapli</option>
                 <option value="onlyQ">Sadece Soru</option>
-                <option value="onlyA">Sadece Cevaplı</option>
+                <option value="onlyA">Sadece Cevapli</option>
             </select>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                <button class="btn btn-p" onclick="processAll('image')">🖼️ Görsel</button>
-                <button class="btn btn-v" onclick="processAll('video')">🎬 MP4 İndir</button>
+            <div class="dd-wrap" id="dlWrap">
+                <button class="btn btn-sl" onclick="toggleDD('dlPanel')">Indirme Yontemi</button>
+                <div class="dd-panel dd-list" id="dlPanel">
+                    <button onclick="setDlMethod('zip')">ZIP olarak indir</button>
+                    <button onclick="setDlMethod('single')">Tek tek indir</button>
+                </div>
             </div>
-            <div style="font-size:0.75rem; color:#64748b; margin-top:2px;">
-                ⏱ Video süresi: <input type="number" id="vidDuration" value="5" min="1" max="60" style="width:50px; padding:3px 6px; font-size:0.75rem;"> saniye
-            </div>
+            <span id="dlLabel" style="font-size:.78rem;color:var(--muted);">ZIP</span>
         </div>
-    </div>
-
-    <div class="preview-wrapper">
-        <div id="liveEditor" class="live-editor-container">
-            <div class="q-capsule"><input type="text" id="liveQ" class="q-input-live" placeholder="Soru yazın..."></div>
-            <div class="opt-grid">
-                <div class="opt-box"><div class="opt-letter">A</div><input id="liveA" class="opt-input-live" placeholder="A şıkkı"></div>
-                <div class="opt-box"><div class="opt-letter">B</div><input id="liveB" class="opt-input-live" placeholder="B şıkkı"></div>
-                <div class="opt-box"><div class="opt-letter">C</div><input id="liveC" class="opt-input-live" placeholder="C şıkkı"></div>
-                <div class="opt-box"><div class="opt-letter">D</div><input id="liveD" class="opt-input-live" placeholder="D şıkkı"></div>
-            </div>
+        <div class="sep"></div>
+        <div class="ep-row">
+            <span class="ep-lbl">Aktar</span>
+            <button class="btn btn-p" onclick="processAll('image')">Gorsel Indir</button>
+            <button class="btn btn-v" onclick="processAll('video')">MP4 Indir</button>
+            <label style="display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--muted);">
+                <input type="number" id="vidDuration" value="5" min="1" max="60" style="width:50px;padding:5px 7px;"> sn
+            </label>
         </div>
-    </div>
-
-    <div class="data-card">
-        <table>
-            <thead><tr>
-                <th width="40"><input type="checkbox" onclick="toggleAll(this)"></th>
-                <th>Soru Metni</th>
-                <th style="text-align:right">İşlem</th>
-            </tr></thead>
-            <tbody id="listBody"></tbody>
-        </table>
     </div>
 </div>
 
-<!-- Ekran dışı render alanı -->
+<!-- 2. Onizleme -->
+<div class="preview-wrapper">
+    <div id="liveEditor" class="live-editor-container">
+        <div class="q-capsule">
+            <div id="liveQ" class="q-editable" contenteditable="true" data-ph="Soruyu buraya yazin..."></div>
+        </div>
+        <div class="opt-grid">
+            <div class="opt-box"><div class="opt-letter">A</div><div id="liveA" class="opt-editable" contenteditable="true" data-ph="A sikki"></div></div>
+            <div class="opt-box"><div class="opt-letter">B</div><div id="liveB" class="opt-editable" contenteditable="true" data-ph="B sikki"></div></div>
+            <div class="opt-box"><div class="opt-letter">C</div><div id="liveC" class="opt-editable" contenteditable="true" data-ph="C sikki"></div></div>
+            <div class="opt-box"><div class="opt-letter">D</div><div id="liveD" class="opt-editable" contenteditable="true" data-ph="D sikki"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Form Bari -->
+<div class="form-bar">
+    <label>Dogru sik:</label>
+    <select id="inCorrect" style="width:78px;">
+        <option value="">--</option>
+        <option value="a">A</option><option value="b">B</option>
+        <option value="c">C</option><option value="d">D</option>
+    </select>
+    <button class="btn btn-g" onclick="saveNew()" id="saveBtn">Kaydet</button>
+    <button class="btn btn-u" onclick="doUpdate()" id="updateBtn">Guncelle</button>
+    <button class="btn btn-sl" onclick="cancelEdit()" id="cancelBtn" style="display:none;">Iptal</button>
+    <div style="flex:1"></div>
+
+    <!-- Font Dropdown -->
+    <div class="dd-wrap" id="fontWrap">
+        <div class="font-trigger" onclick="toggleDD('fontPanel')">
+            <span>Yazi Tipi</span>
+            <span class="ft-name" id="badgeQFont">Montserrat</span>
+            <span class="ft-size" id="badgeQSize">52px</span>
+            <span style="color:var(--muted);">/</span>
+            <span class="ft-name" id="badgeOptFont">Montserrat</span>
+            <span class="ft-size" id="badgeOptSize">30px</span>
+            <span style="color:var(--muted);">▾</span>
+        </div>
+        <div class="dd-panel font-panel-inner" id="fontPanel">
+            <div class="font-dd-grid">
+                <div>
+                    <p class="fsec-title">Soru Metni</p>
+                    <div class="font-list" id="qFontList"></div>
+                    <div class="style-row">
+                        <button class="style-btn active" id="qBoldBtn" onclick="toggleStyle('q','bold')">B Kalin</button>
+                        <button class="style-btn" id="qItalicBtn" onclick="toggleStyle('q','italic')">I Italik</button>
+                    </div>
+                    <div class="size-row">
+                        <label>Punto</label>
+                        <input type="range" id="qSizeSlider" min="24" max="96" value="52" oninput="onSizeChange('q')">
+                        <span class="size-val" id="qSizeVal">52</span>px
+                    </div>
+                </div>
+                <div>
+                    <p class="fsec-title">Siklar</p>
+                    <div class="font-list" id="optFontList"></div>
+                    <div class="style-row">
+                        <button class="style-btn active" id="optBoldBtn" onclick="toggleStyle('opt','bold')">B Kalin</button>
+                        <button class="style-btn" id="optItalicBtn" onclick="toggleStyle('opt','italic')">I Italik</button>
+                    </div>
+                    <div class="size-row">
+                        <label>Punto</label>
+                        <input type="range" id="optSizeSlider" min="14" max="72" value="30" oninput="onSizeChange('opt')">
+                        <span class="size-val" id="optSizeVal">30</span>px
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <span class="file-btn" onclick="document.getElementById('bgInput').click()">Arka Plan</span>
+    <input type="file" id="bgInput" accept="image/*" onchange="handleBg(this)">
+</div>
+
+<!-- 4. Soru Listesi -->
+<div class="data-card">
+    <table>
+        <thead><tr>
+            <th width="40"><input type="checkbox" onclick="toggleAll(this)"></th>
+            <th>Soru Metni</th>
+            <th width="80" style="text-align:right">Sil</th>
+        </tr></thead>
+        <tbody id="listBody"></tbody>
+    </table>
+</div>
+</div>
+
+<!-- Render alani -->
 <div id="render-stage">
-    <div id="render-box" class="live-editor-container" style="
-        width:1920px; height:1080px; background-color:#2d3748;
-        flex-direction:column; justify-content:center; align-items:center;
-        padding:80px; box-sizing:border-box;
-        background-size:cover; background-position:center;">
-        <div class="q-capsule" style="padding:40px 60px; border-width:8px; width:75%; border-radius:100px; background:#fff; margin-bottom:50px;">
-            <div id="r-q" style="font-size:55px; font-weight:900; color:#000; text-align:center;"></div>
+    <div id="render-box" style="width:1920px;height:1080px;background-color:#2d3748;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:80px;box-sizing:border-box;background-size:cover;background-position:center;">
+        <div style="background:#fff;width:75%;padding:40px 80px;border-radius:80px;border:8px solid #1e293b;margin-bottom:50px;">
+            <div id="r-q" style="font-weight:900;color:#000;text-align:center;word-break:break-word;white-space:pre-wrap;line-height:1.25;"></div>
         </div>
-        <div class="opt-grid" style="width:80%; gap:30px; display:grid; grid-template-columns:1fr 1fr;">
-            <div id="box-a" class="opt-box" style="min-height:90px; border-width:6px; border-radius:100px; display:flex; align-items:center; padding:20px 40px; background:#fff;">
-                <div class="opt-letter" style="width:70px;height:70px;font-size:35px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:20px;flex-shrink:0;">A</div>
-                <div id="r-a" style="font-size:32px; font-weight:700; color:#000;"></div>
+        <div style="width:82%;display:grid;grid-template-columns:1fr 1fr;gap:30px;">
+            <div id="box-a" style="border:6px solid #cbd5e1;border-radius:80px;display:flex;align-items:flex-start;padding:22px 42px;background:#fff;min-height:90px;">
+                <div style="width:70px;height:70px;font-size:35px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:22px;flex-shrink:0;color:#000;margin-top:4px;">A</div>
+                <div id="r-a" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;padding-top:8px;"></div>
             </div>
-            <div id="box-b" class="opt-box" style="min-height:90px; border-width:6px; border-radius:100px; display:flex; align-items:center; padding:20px 40px; background:#fff;">
-                <div class="opt-letter" style="width:70px;height:70px;font-size:35px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:20px;flex-shrink:0;">B</div>
-                <div id="r-b" style="font-size:32px; font-weight:700; color:#000;"></div>
+            <div id="box-b" style="border:6px solid #cbd5e1;border-radius:80px;display:flex;align-items:flex-start;padding:22px 42px;background:#fff;min-height:90px;">
+                <div style="width:70px;height:70px;font-size:35px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:22px;flex-shrink:0;color:#000;margin-top:4px;">B</div>
+                <div id="r-b" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;padding-top:8px;"></div>
             </div>
-            <div id="box-c" class="opt-box" style="min-height:90px; border-width:6px; border-radius:100px; display:flex; align-items:center; padding:20px 40px; background:#fff;">
-                <div class="opt-letter" style="width:70px;height:70px;font-size:35px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:20px;flex-shrink:0;">C</div>
-                <div id="r-c" style="font-size:32px; font-weight:700; color:#000;"></div>
+            <div id="box-c" style="border:6px solid #cbd5e1;border-radius:80px;display:flex;align-items:flex-start;padding:22px 42px;background:#fff;min-height:90px;">
+                <div style="width:70px;height:70px;font-size:35px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:22px;flex-shrink:0;color:#000;margin-top:4px;">C</div>
+                <div id="r-c" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;padding-top:8px;"></div>
             </div>
-            <div id="box-d" class="opt-box" style="min-height:90px; border-width:6px; border-radius:100px; display:flex; align-items:center; padding:20px 40px; background:#fff;">
-                <div class="opt-letter" style="width:70px;height:70px;font-size:35px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:20px;flex-shrink:0;">D</div>
-                <div id="r-d" style="font-size:32px; font-weight:700; color:#000;"></div>
+            <div id="box-d" style="border:6px solid #cbd5e1;border-radius:80px;display:flex;align-items:flex-start;padding:22px 42px;background:#fff;min-height:90px;">
+                <div style="width:70px;height:70px;font-size:35px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:22px;flex-shrink:0;color:#000;margin-top:4px;">D</div>
+                <div id="r-d" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;padding-top:8px;"></div>
             </div>
         </div>
     </div>
 </div>
-
 <canvas id="video-canvas"></canvas>
 
 <script>
-let questions = JSON.parse(localStorage.getItem('pro_questions')) || [];
-let savedBg = localStorage.getItem('pro_bg') || "";
-let editingIdx = null;
+const FONTS=[
+    {name:'Montserrat',label:'Montserrat'},{name:'Poppins',label:'Poppins'},
+    {name:'Nunito',label:'Nunito'},{name:'Raleway',label:'Raleway'},
+    {name:'Oswald',label:'Oswald'},{name:'Bebas Neue',label:'Bebas Neue'},
+    {name:'Anton',label:'Anton'},{name:'Playfair Display',label:'Playfair'},
+    {name:'Roboto Condensed',label:'Roboto Cond.'},{name:'Inter',label:'Inter'},
+];
 
-function applyBg(src) {
-    savedBg = src;
-    document.getElementById('liveEditor').style.backgroundImage = `url(${src})`;
-    document.getElementById('render-box').style.backgroundImage = `url(${src})`;
+let questions=JSON.parse(localStorage.getItem('pro_questions'))||[];
+let savedBg=localStorage.getItem('pro_bg')||'';
+let editingIdx=null;
+let dlMethod='zip';
+let fs=JSON.parse(localStorage.getItem('pro_fonts2')||'null')||{
+    qFont:'Montserrat',qItalic:false,qBold:true,qSize:52,
+    optFont:'Montserrat',optItalic:false,optBold:true,optSize:30
+};
+
+// Dropdown
+function toggleDD(id){
+    const p=document.getElementById(id);
+    const was=p.classList.contains('open');
+    document.querySelectorAll('.dd-panel').forEach(x=>x.classList.remove('open'));
+    if(!was) p.classList.add('open');
 }
+document.addEventListener('click',e=>{
+    if(!e.target.closest('.dd-wrap')) document.querySelectorAll('.dd-panel').forEach(x=>x.classList.remove('open'));
+});
+function setDlMethod(v){dlMethod=v;document.getElementById('dlLabel').innerText=v==='zip'?'ZIP':'Tek tek';document.getElementById('dlPanel').classList.remove('open');}
 
-// Arka planı base64'e çevirerek uygula (CORS / tainted canvas sorununu önler)
-async function loadBgAsBase64(url) {
-    try {
-        const res = await fetch(url, { cache: 'force-cache' });
-        const blob = await res.blob();
-        return new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onload = e => resolve(e.target.result);
-            reader.readAsDataURL(blob);
-        });
-    } catch(e) {
-        console.warn('Arka plan yüklenemedi:', e);
-        return null;
-    }
-}
-
-if(savedBg) {
-    // localStorage'da zaten base64 kayıtlı
-    applyBg(savedBg);
-} else {
-    // İlk yükleme: background.jpg'yi base64'e çevir ve kaydet
-    loadBgAsBase64('background.jpg').then(b64 => {
-        if(b64) {
-            localStorage.setItem('pro_bg', b64);
-            applyBg(b64);
-        }
+// Font listelerini olustur
+function buildFontLists(){
+    ['q','opt'].forEach(t=>{
+        document.getElementById(t+'FontList').innerHTML=FONTS.map(f=>`
+            <div class="font-opt ${fs[t+'Font']===f.name?'active':''}" data-font="${f.name}"
+                 style="font-family:'${f.name}'" onclick="selectFont('${t}','${f.name}',this)">
+                <span class="pchar" style="font-family:'${f.name}'">Aa</span>${f.label}
+            </div>`).join('');
     });
 }
+function selectFont(t,name,el){
+    fs[t+'Font']=name;
+    el.closest('.font-list').querySelectorAll('.font-opt').forEach(e=>e.classList.remove('active'));
+    el.classList.add('active');
+    saveFonts();applyFonts();updateBadge();
+}
+function toggleStyle(t,style){
+    const k=t+(style==='italic'?'Italic':'Bold');
+    fs[k]=!fs[k];
+    document.getElementById(t+(style==='italic'?'ItalicBtn':'BoldBtn')).classList.toggle('active',fs[k]);
+    saveFonts();applyFonts();
+}
+function onSizeChange(t){
+    const v=parseInt(document.getElementById(t+'SizeSlider').value);
+    fs[t+'Size']=v;
+    document.getElementById(t+'SizeVal').innerText=v;
+    saveFonts();applyFonts();updateBadge();
+}
+function updateBadge(){
+    document.getElementById('badgeQFont').innerText=fs.qFont;
+    document.getElementById('badgeQSize').innerText=fs.qSize+'px';
+    document.getElementById('badgeOptFont').innerText=fs.optFont;
+    document.getElementById('badgeOptSize').innerText=fs.optSize+'px';
+}
+function applyFonts(){
+    const qFam="'"+fs.qFont+"',sans-serif";
+    const oFam="'"+fs.optFont+"',sans-serif";
+    const previewW=document.querySelector('.preview-wrapper')?.offsetWidth||800;
+    const scale=previewW/1920;
+    const qPx=(fs.qSize*scale).toFixed(1)+'px';
+    const oPx=(fs.optSize*scale).toFixed(1)+'px';
+    const qSt=fs.qItalic?'italic':'normal'; const qW=fs.qBold?'900':'400';
+    const oSt=fs.optItalic?'italic':'normal'; const oW=fs.optBold?'700':'400';
+    const lq=document.getElementById('liveQ');
+    lq.style.fontFamily=qFam;lq.style.fontSize=qPx;lq.style.fontStyle=qSt;lq.style.fontWeight=qW;
+    ['liveA','liveB','liveC','liveD'].forEach(id=>{
+        const e=document.getElementById(id);
+        e.style.fontFamily=oFam;e.style.fontSize=oPx;e.style.fontStyle=oSt;e.style.fontWeight=oW;
+    });
+    const rq=document.getElementById('r-q');
+    rq.style.fontFamily=qFam;rq.style.fontSize=fs.qSize+'px';rq.style.fontStyle=qSt;rq.style.fontWeight=qW;
+    ['r-a','r-b','r-c','r-d'].forEach(id=>{
+        const e=document.getElementById(id);
+        e.style.fontFamily=oFam;e.style.fontSize=fs.optSize+'px';e.style.fontStyle=oSt;e.style.fontWeight=oW;
+    });
+}
+function restoreFontUI(){
+    document.getElementById('qSizeSlider').value=fs.qSize;
+    document.getElementById('qSizeVal').innerText=fs.qSize;
+    document.getElementById('optSizeSlider').value=fs.optSize;
+    document.getElementById('optSizeVal').innerText=fs.optSize;
+    document.getElementById('qBoldBtn').classList.toggle('active',fs.qBold);
+    document.getElementById('qItalicBtn').classList.toggle('active',fs.qItalic);
+    document.getElementById('optBoldBtn').classList.toggle('active',fs.optBold);
+    document.getElementById('optItalicBtn').classList.toggle('active',fs.optItalic);
+    updateBadge();applyFonts();
+}
+function saveFonts(){localStorage.setItem('pro_fonts2',JSON.stringify(fs));}
 
-function handleBg(input) {
-    const reader = new FileReader();
-    reader.onload = e => {
-        localStorage.setItem('pro_bg', e.target.result);
-        applyBg(e.target.result);
-    };
-    reader.readAsDataURL(input.files[0]);
+// Arka plan
+function applyBg(src){savedBg=src;document.getElementById('liveEditor').style.backgroundImage=`url(${src})`;document.getElementById('render-box').style.backgroundImage=`url(${src})`;}
+async function loadBgAsBase64(url){try{const res=await fetch(url,{cache:'force-cache'});const blob=await res.blob();return new Promise(r=>{const fr=new FileReader();fr.onload=e=>r(e.target.result);fr.readAsDataURL(blob);});}catch(e){return null;}}
+if(savedBg){applyBg(savedBg);}else{loadBgAsBase64('background.jpg').then(b64=>{if(b64){localStorage.setItem('pro_bg',b64);applyBg(b64);}});}
+function handleBg(input){const fr=new FileReader();fr.onload=e=>{localStorage.setItem('pro_bg',e.target.result);applyBg(e.target.result);};fr.readAsDataURL(input.files[0]);}
+
+// Progress
+function setProgress(p,t){document.getElementById('progressFill').style.width=p+'%';document.getElementById('progressText').innerText=t;}
+function showProgress(s){document.getElementById('progressOverlay').classList.toggle('active',s);}
+
+// Form
+const getEd=id=>document.getElementById(id).innerText.trim();
+const setEd=(id,v)=>document.getElementById(id).innerText=v||'';
+function clearForm(){['liveQ','liveA','liveB','liveC','liveD'].forEach(id=>setEd(id,''));document.getElementById('inCorrect').value='';}
+function getFormData(){return{Soru:getEd('liveQ'),A:getEd('liveA'),B:getEd('liveB'),C:getEd('liveC'),D:getEd('liveD'),Dogru:document.getElementById('inCorrect').value};}
+function setEditMode(on){document.getElementById('saveBtn').style.display=on?'none':'inline-flex';document.getElementById('updateBtn').classList.toggle('visible',on);document.getElementById('cancelBtn').style.display=on?'inline-flex':'none';}
+function saveNew(){const q=getFormData();if(!q.Soru)return alert('Soru bos!');questions.push(q);save();clearForm();}
+function doUpdate(){if(editingIdx===null)return;const q=getFormData();if(!q.Soru)return alert('Soru bos!');questions[editingIdx]=q;editingIdx=null;setEditMode(false);save();clearForm();}
+function cancelEdit(){editingIdx=null;setEditMode(false);clearForm();}
+function editQ(i){editingIdx=i;const q=questions[i];setEd('liveQ',q.Soru);setEd('liveA',q.A);setEd('liveB',q.B);setEd('liveC',q.C);setEd('liveD',q.D);document.getElementById('inCorrect').value=(q.Dogru||'').toLowerCase();setEditMode(true);window.scrollTo({top:0,behavior:'smooth'});}
+function deleteQ(i){if(confirm('Silinsin mi?')){questions.splice(i,1);save();}}
+function toggleAll(src){document.querySelectorAll('.sel-q').forEach(cb=>cb.checked=src.checked);}
+function clearAll(){if(confirm('Tum sorular silinecek!')){questions=[];save();}}
+function save(){localStorage.setItem('pro_questions',JSON.stringify(questions));renderTable();}
+function renderTable(){document.getElementById('listBody').innerHTML=questions.map((q,i)=>`
+    <tr class="q-row">
+        <td><input type="checkbox" class="sel-q" data-idx="${i}" onclick="event.stopPropagation()"></td>
+        <td onclick="editQ(${i})">${(q.Soru||'').substring(0,120)}${(q.Soru||'').length>120?'...':''}</td>
+        <td style="text-align:right"><button style="background:#ef4444;color:white;border:none;padding:5px 9px;border-radius:6px;cursor:pointer;font-size:12px;" onclick="event.stopPropagation();deleteQ(${i})">Sil</button></td>
+    </tr>`).join('');}
+function importExcel(input){const fr=new FileReader();fr.onload=e=>{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});questions=[...questions,...XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]])];save();};fr.readAsArrayBuffer(input.files[0]);}
+function exportToExcel(){const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(questions),'Sorular');XLSX.writeFile(wb,'Yedek_Sorular.xlsx');}
+
+// Render
+function updateRender(q,isCorr){
+    document.getElementById('r-q').innerText=q.Soru||'';
+    ['a','b','c','d'].forEach(l=>document.getElementById('r-'+l).innerText=q[l.toUpperCase()]||'');
+    ['a','b','c','d'].forEach(l=>{const el=document.getElementById('box-'+l);el.style.borderColor='#cbd5e1';el.style.background='#fff';});
+    if(isCorr&&q.Dogru){const el=document.getElementById('box-'+q.Dogru.toLowerCase());if(el){el.style.borderColor='#22c55e';el.style.background='#f0fdf4';}}
+    applyFonts();
 }
 
-function setProgress(pct, text) {
-    document.getElementById('progressFill').style.width = pct + '%';
-    document.getElementById('progressText').innerText = text;
-}
-function showProgress(show) {
-    document.getElementById('progressOverlay').classList.toggle('active', show);
-}
-
-function addOrUpdate() {
-    const q = {
-        Soru: document.getElementById('liveQ').value,
-        A: document.getElementById('liveA').value,
-        B: document.getElementById('liveB').value,
-        C: document.getElementById('liveC').value,
-        D: document.getElementById('liveD').value,
-        Dogru: document.getElementById('inCorrect').value
-    };
-    if(!q.Soru) return alert("Soru boş olamaz!");
-    if(editingIdx !== null) {
-        questions[editingIdx] = q; editingIdx = null;
-        document.getElementById('saveBtn').innerText = "✅ Kaydet";
-    } else {
-        questions.push(q);
-    }
-    save(); resetForm();
-}
-
-function resetForm() {
-    ["liveQ","liveA","liveB","liveC","liveD","inCorrect"].forEach(id => document.getElementById(id).value = "");
-    editingIdx = null;
-}
-
-function editQ(i) {
-    editingIdx = i;
-    const q = questions[i];
-    document.getElementById('liveQ').value = q.Soru;
-    document.getElementById('liveA').value = q.A;
-    document.getElementById('liveB').value = q.B;
-    document.getElementById('liveC').value = q.C;
-    document.getElementById('liveD').value = q.D;
-    document.getElementById('inCorrect').value = (q.Dogru || "").toLowerCase();
-    document.getElementById('saveBtn').innerText = "🔄 Güncelle";
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function save() { localStorage.setItem('pro_questions', JSON.stringify(questions)); renderTable(); }
-
-function renderTable() {
-    document.getElementById('listBody').innerHTML = questions.map((q, i) => `
-        <tr class="q-row">
-            <td><input type="checkbox" class="sel-q" data-idx="${i}" onclick="event.stopPropagation()"></td>
-            <td onclick="editQ(${i})">${(q.Soru || '').substring(0, 100)}...</td>
-            <td style="text-align:right">
-                <button style="background:#ef4444;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:12px;" onclick="event.stopPropagation(); deleteQ(${i})">🗑️</button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function deleteQ(i) { if(confirm("Silinsin mi?")) { questions.splice(i, 1); save(); } }
-function toggleAll(src) { document.querySelectorAll('.sel-q').forEach(cb => cb.checked = src.checked); }
-function clearAll() { if(confirm("Tümü silinecek!")) { questions = []; save(); } }
-
-function importExcel(input) {
-    const reader = new FileReader();
-    reader.onload = e => {
-        const workbook = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
-        const data = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-        questions = [...questions, ...data];
-        save();
-    };
-    reader.readAsArrayBuffer(input.files[0]);
-}
-
-function exportToExcel() {
-    const ws = XLSX.utils.json_to_sheet(questions);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Sorular");
-    XLSX.writeFile(wb, "Yedek_Sorular.xlsx");
-}
-
-// ─── ANA İŞLEMCİ ─────────────────────────────────────────
-async function processAll(type) {
-    const selected = document.querySelectorAll('.sel-q:checked');
-    if(!selected.length) return alert("Lütfen en az bir soru seçin!");
-
+// Islemci
+async function processAll(type){
+    const sel=document.querySelectorAll('.sel-q:checked');
+    if(!sel.length)return alert('En az bir soru secin!');
     showProgress(true);
-    const zip = new JSZip();
-    const exportMode = document.getElementById('exportType').value;
-    const dlMode = document.getElementById('downloadMode').value;
-    const w = parseInt(document.getElementById('wI').value) || 1920;
-    const h = parseInt(document.getElementById('hI').value) || 1080;
-    const durSec = parseInt(document.getElementById('vidDuration').value) || 5;
-
-    const steps = (dlMode === 'both') ? 2 : 1;
-    const total = selected.length * steps;
-    let done = 0;
-
-    for(let chk of selected) {
-        const q = questions[chk.dataset.idx];
-        const qIdx = parseInt(chk.dataset.idx) + 1;
-
-        const runStep = async (isCorr, suffix) => {
-            setProgress(Math.round(done / total * 95), `İşleniyor ${qIdx}${suffix}...`);
-            updateRender(q, isCorr);
-            await sleep(250); // DOM render bekle
-
-            let blob, fName;
-            if(type === 'image') {
-                const canvas = await html2canvas(document.getElementById('render-box'), {
-                    scale:1, useCORS:true, allowTaint:true, width:w, height:h, logging:false
-                });
-                blob = await canvasToBlob(canvas, 'image/jpeg', 0.95);
-                fName = `soru_${qIdx}${suffix}.jpg`;
-            } else {
-                blob = await renderMp4(document.getElementById('render-box'), w, h, durSec);
-                fName = `soru_${qIdx}${suffix}.mp4`;
-            }
-
-            if(exportMode === 'zip') zip.file(fName, blob);
-            else downloadBlob(blob, fName);
-            done++;
+    const zip=new JSZip();
+    const dlMode=document.getElementById('downloadMode').value;
+    const w=parseInt(document.getElementById('wI').value)||1920;
+    const h=parseInt(document.getElementById('hI').value)||1080;
+    const dur=parseInt(document.getElementById('vidDuration').value)||5;
+    const total=sel.length*(dlMode==='both'?2:1);let done=0;
+    for(let chk of sel){
+        const q=questions[chk.dataset.idx];const qi=parseInt(chk.dataset.idx)+1;
+        const run=async(isCorr,sfx)=>{
+            setProgress(Math.round(done/total*95),`Isleniyor: Soru ${qi}${sfx?' (cevapli)':''}...`);
+            updateRender(q,isCorr);await sleep(300);
+            let blob,fName;
+            if(type==='image'){const cv=await html2canvas(document.getElementById('render-box'),{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});blob=await canvasToBlob(cv,'image/jpeg',.95);fName=`soru_${qi}${sfx}.jpg`;}
+            else{blob=await renderMp4(document.getElementById('render-box'),w,h,dur);fName=`soru_${qi}${sfx}.mp4`;}
+            if(dlMethod==='zip')zip.file(fName,blob);else downloadBlob(blob,fName);done++;
         };
-
-        if(dlMode === 'onlyQ' || dlMode === 'both') await runStep(false, '');
-        if(dlMode === 'onlyA' || dlMode === 'both') await runStep(true, '_cevap');
+        if(dlMode==='onlyQ'||dlMode==='both')await run(false,'');
+        if(dlMode==='onlyA'||dlMode==='both')await run(true,'_cevap');
     }
-
-    if(exportMode === 'zip') {
-        setProgress(98, 'ZIP hazırlanıyor...');
-        const content = await zip.generateAsync({ type:'blob' });
-        downloadBlob(content, `Export_${type}.zip`);
-    }
-
+    if(dlMethod==='zip'){setProgress(98,'ZIP hazirlaniyor...');downloadBlob(await zip.generateAsync({type:'blob'}),`Export_${type}.zip`);}
     showProgress(false);
 }
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);}
+const canvasToBlob=(c,t,q)=>new Promise(r=>c.toBlob(r,t,q));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
-function updateRender(q, isCorr) {
-    document.getElementById('r-q').innerText = q.Soru || '';
-    document.getElementById('r-a').innerText = q.A || '';
-    document.getElementById('r-b').innerText = q.B || '';
-    document.getElementById('r-c').innerText = q.C || '';
-    document.getElementById('r-d').innerText = q.D || '';
-    ['a','b','c','d'].forEach(l => {
-        const el = document.getElementById(`box-${l}`);
-        el.style.borderColor = "#cbd5e1";
-        el.style.background = "#fff";
-    });
-    if(isCorr && q.Dogru) {
-        const el = document.getElementById(`box-${q.Dogru.toLowerCase()}`);
-        if(el) { el.style.borderColor = "#22c55e"; el.style.background = "#f0fdf4"; }
-    }
+async function renderMp4(element,w,h,durationSec){
+    if(typeof VideoEncoder==='undefined')return renderWebmFallback(element,w,h,durationSec*1000);
+    const src=await html2canvas(element,{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});
+    const{Muxer,ArrayBufferTarget}=Mp4Muxer;
+    const target=new ArrayBufferTarget();
+    const muxer=new Muxer({target,video:{codec:'avc',width:w,height:h},fastStart:'in-memory'});
+    const fps=30,tot=durationSec*fps,dur=Math.round(1_000_000/fps);
+    const enc=new VideoEncoder({output:(chunk,meta)=>muxer.addVideoChunk(chunk,meta),error:e=>console.error(e)});
+    enc.configure({codec:'avc1.42001f',width:w,height:h,bitrate:8_000_000,framerate:fps});
+    const off=document.createElement('canvas');off.width=w;off.height=h;const ctx=off.getContext('2d');
+    for(let i=0;i<tot;i++){ctx.drawImage(src,0,0,w,h);const vf=new VideoFrame(off,{timestamp:i*dur,duration:dur});enc.encode(vf,{keyFrame:i%(fps*2)===0});vf.close();if(i%fps===0)await sleep(0);}
+    await enc.flush();muxer.finalize();
+    return new Blob([target.buffer],{type:'video/mp4'});
 }
-
-function downloadBlob(blob, name) {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
-}
-
-const canvasToBlob = (c, t, q) => new Promise(r => c.toBlob(r, t, q));
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-// ─── MP4 MOTORU (mp4-muxer + WebCodecs) ──────────────────
-// Hiç dış indirme gerektirmez. Tarayıcı içinde H.264 encode eder.
-async function renderMp4(element, w, h, durationSec) {
-
-    // WebCodecs desteği var mı?
-    if(typeof VideoEncoder === 'undefined') {
-        // Fallback: WebM olarak kaydet (eski tarayıcılar)
-        return await renderWebmFallback(element, w, h, durationSec * 1000);
-    }
-
-    // 1. html2canvas ile tek bir kaynak frame al
-    const sourceCanvas = await html2canvas(element, {
-        scale:1, useCORS:true, allowTaint:true, width:w, height:h, logging:false
-    });
-
-    // 2. mp4-muxer kurulumu
-    const { Muxer, ArrayBufferTarget } = Mp4Muxer;
-    const target = new ArrayBufferTarget();
-    const muxer = new Muxer({
-        target,
-        video: { codec:'avc', width:w, height:h },
-        fastStart: 'in-memory'
-    });
-
-    // 3. VideoEncoder kurulumu
-    const fps = 30;
-    const totalFrames = durationSec * fps;
-    const frameDurationUs = Math.round(1_000_000 / fps); // mikrosaniye
-
-    const encoder = new VideoEncoder({
-        output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
-        error: e => console.error('VideoEncoder error:', e)
-    });
-
-    encoder.configure({
-        codec: 'avc1.42001f', // H.264 Baseline
-        width: w,
-        height: h,
-        bitrate: 8_000_000,
-        framerate: fps
-    });
-
-    // 4. Frame'leri encode et (hepsi aynı görüntü)
-    const offscreen = document.createElement('canvas');
-    offscreen.width = w;
-    offscreen.height = h;
-    const ctx = offscreen.getContext('2d');
-
-    for(let i = 0; i < totalFrames; i++) {
-        ctx.drawImage(sourceCanvas, 0, 0, w, h);
-        const videoFrame = new VideoFrame(offscreen, {
-            timestamp: i * frameDurationUs,
-            duration: frameDurationUs
-        });
-        encoder.encode(videoFrame, { keyFrame: i % (fps * 2) === 0 });
-        videoFrame.close();
-        // UI'nın donmaması için her 30 frame'de bir bekle
-        if(i % fps === 0) await sleep(0);
-    }
-
-    // 5. Encoder'ı kapat ve mux et
-    await encoder.flush();
-    muxer.finalize();
-
-    const { buffer } = target;
-    return new Blob([buffer], { type: 'video/mp4' });
-}
-
-// Eski tarayıcılar için WebM fallback
-function renderWebmFallback(element, w, h, durationMs) {
-    return new Promise(async (resolve, reject) => {
-        const mimeType = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']
-            .find(t => MediaRecorder.isTypeSupported(t));
-        if(!mimeType) return reject(new Error('Video kaydı desteklenmiyor'));
-
-        const sourceCanvas = await html2canvas(element, {
-            scale:1, useCORS:true, allowTaint:true, width:w, height:h, logging:false
-        });
-
-        const workCanvas = document.getElementById('video-canvas');
-        workCanvas.width = w; workCanvas.height = h;
-        const ctx = workCanvas.getContext('2d');
-        ctx.drawImage(sourceCanvas, 0, 0, w, h);
-
-        const stream = workCanvas.captureStream(30);
-        const recorder = new MediaRecorder(stream, { mimeType });
-        const chunks = [];
-
-        recorder.ondataavailable = e => { if(e.data?.size > 0) chunks.push(e.data); };
-        recorder.onstop = () => {
-            stream.getTracks().forEach(t => t.stop());
-            resolve(new Blob(chunks, { type: mimeType }));
-        };
-        recorder.onerror = reject;
-        recorder.start();
-
-        const fps = 30, interval = 1000/fps;
-        let count = 0, last = performance.now();
-        const total = Math.ceil((durationMs/1000)*fps);
-
-        function tick(now) {
-            if(now - last >= interval) {
-                ctx.drawImage(sourceCanvas, 0, 0, w, h);
-                ctx.fillStyle = 'rgba(0,0,0,0.003)';
-                ctx.fillRect(0, 0, 1, 1);
-                last = now; count++;
-            }
-            if(count < total) requestAnimationFrame(tick);
-            else recorder.stop();
-        }
+function renderWebmFallback(element,w,h,durationMs){
+    return new Promise(async(resolve,reject)=>{
+        const mime=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+        if(!mime)return reject(new Error('Video desteklenmiyor'));
+        const src=await html2canvas(element,{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});
+        const wc=document.getElementById('video-canvas');wc.width=w;wc.height=h;
+        const ctx=wc.getContext('2d');ctx.drawImage(src,0,0,w,h);
+        const stream=wc.captureStream(30);const rec=new MediaRecorder(stream,{mimeType:mime});const chunks=[];
+        rec.ondataavailable=e=>{if(e.data?.size>0)chunks.push(e.data);};
+        rec.onstop=()=>{stream.getTracks().forEach(t=>t.stop());resolve(new Blob(chunks,{type:mime}));};
+        rec.onerror=reject;rec.start();
+        let cnt=0,last=performance.now(),tot=Math.ceil((durationMs/1000)*30);
+        function tick(now){if(now-last>=33){ctx.drawImage(src,0,0,w,h);ctx.fillStyle='rgba(0,0,0,0.003)';ctx.fillRect(0,0,1,1);last=now;cnt++;}if(cnt<tot)requestAnimationFrame(tick);else rec.stop();}
         requestAnimationFrame(tick);
     });
 }
 
+buildFontLists();
+restoreFontUI();
 renderTable();
+window.addEventListener('resize',applyFonts);
 </script>
 </body>
 </html>
