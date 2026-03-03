@@ -177,10 +177,11 @@ let questions = JSON.parse(localStorage.getItem('pro_questions')) || [];
 let savedBg = localStorage.getItem('pro_bg') || "";
 let editingIdx = null;
 
-if(savedBg) {
-    document.getElementById('liveEditor').style.backgroundImage = `url(${savedBg})`;
-    document.getElementById('render-box').style.backgroundImage = `url(${savedBg})`;
-}
+// Varsayılan arka plan: localStorage'da kayıtlı yoksa background.jpg kullan
+if(!savedBg) savedBg = 'background.jpg';
+
+document.getElementById('liveEditor').style.backgroundImage = `url(${savedBg})`;
+document.getElementById('render-box').style.backgroundImage = `url(${savedBg})`;
 
 function handleBg(input) {
     const reader = new FileReader();
