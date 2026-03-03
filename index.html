@@ -261,18 +261,18 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
           <div class="dropdown-menu p-3 font-dd-panel" style="width:560px;right:0;left:auto;">
 
             <!-- TRT Font Yükleme Alanı -->
-            <div class="trt-font-zone mb-3" onclick="document.getElementById('trtFontInput').click()">
+            <div class="trt-font-zone mb-3" onclick="document.getElementById('fontFileInput').click()">
               <div class="d-flex align-items-center gap-2 mb-1">
-                <i class="bi bi-folder2-open text-primary"></i>
-                <span class="small fw-bold text-light">TRT Font Dosyalarını Yükle</span>
-                <span class="badge bg-secondary ms-auto" id="loadedFontCount">0 / 8</span>
+                <i class="bi bi-fonts text-primary"></i>
+                <span class="small fw-bold text-light">Font Dosyalarını Yükle</span>
+                <span class="badge bg-secondary ms-auto" id="loadedFontCount">0 font</span>
               </div>
               <p class="text-muted mb-2" style="font-size:.75rem;">
-                TRT-Bold.otf, TRT-Regular.otf vb. tüm .otf dosyalarını seçin
+                <i class="bi bi-info-circle me-1"></i>Tıklayın, istediğiniz <strong>tüm font dosyalarını</strong> seçin (.otf, .ttf, .woff)
               </p>
               <div id="loadedFontBadges" class="d-flex flex-wrap gap-1"></div>
             </div>
-            <input type="file" id="trtFontInput" accept=".otf,.ttf,.woff,.woff2" multiple style="display:none;" onchange="loadTRTFonts(this)">
+            <input type="file" id="fontFileInput" accept=".otf,.ttf,.woff,.woff2" multiple style="display:none;" onchange="loadFontsFromFiles(this)">
 
             <hr class="my-2">
 
@@ -286,8 +286,8 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
                 </div>
                 <div class="d-flex align-items-center gap-2 mt-2 pt-2 border-top">
                   <span class="text-muted small">Punto</span>
-                  <input type="range" class="form-range flex-grow-1" id="qSizeSlider" min="24" max="96" value="52" oninput="onSizeChange('q')">
-                  <span class="badge bg-secondary" id="qSizeVal">52px</span>
+                  <input type="range" class="form-range flex-grow-1" id="qSizeSlider" min="24" max="96" value="40" oninput="onSizeChange('q')">
+                  <span class="badge bg-secondary" id="qSizeVal">40px</span>
                 </div>
               </div>
               <div class="col-6">
@@ -374,78 +374,109 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
 <canvas id="video-canvas"></canvas>
 
 <script>
-// ─── TRT Font tanımları (varyasyon adı → dosya adı eşlemesi) ───────────────
-const TRT_FONT_DEFS = [
-  { name:'TRT Regular',     file:'TRT-Regular.otf',      weight:'400', style:'normal'  },
-  { name:'TRT Regular İtalik', file:'TRT-RegularItalic.otf', weight:'400', style:'italic'  },
-  { name:'TRT Light',       file:'TRT-Light.otf',         weight:'300', style:'normal'  },
-  { name:'TRT Light İtalik',file:'TRT-LightItalic.otf',   weight:'300', style:'italic'  },
-  { name:'TRT Medium',      file:'TRT-Medium.otf',        weight:'500', style:'normal'  },
-  { name:'TRT Medium İtalik',file:'TRT-MediumItalic.otf', weight:'500', style:'italic'  },
-  { name:'TRT Bold',        file:'TRT-Bold.otf',          weight:'700', style:'normal'  },
-  { name:'TRT Bold İtalik', file:'TRT-BoldItalic.otf',    weight:'700', style:'italic'  },
-];
+// ─── Evrensel Font Yükleyici ─────────────────────────────────────────────────
+// Seçilen her .otf/.ttf/.woff/.woff2 dosyası otomatik algılanır.
+// Dosya adından font adı, weight ve style otomatik türetilir.
 
-// Yüklenen fontların base64 URL'leri
-let loadedFonts = {}; // { 'TRT-Regular.otf': 'data:font/otf;base64,...' }
-
-// Stil sayfası — font-face'ler buraya eklenir
+let loadedFonts = {};
 const fontStyleEl = document.createElement('style');
 document.head.appendChild(fontStyleEl);
-
-// FONTS listesi — başlangıçta boş, fontlar yüklendikçe dolacak
 let FONTS = [];
 
-async function loadTRTFonts(input) {
-  const files = Array.from(input.files);
+function fileNameToFontName(fileName) {
+  return fileName
+    .replace(/\.(otf|ttf|woff2?)$/i, '')
+    .replace(/[-_]/g, ' ')
+    .trim();
+}
+function guessWeight(name) {
+  const n = name.toLowerCase();
+  if (n.includes('thin'))                              return '100';
+  if (n.includes('extralight')||n.includes('ultralight')) return '200';
+  if (n.includes('light'))                             return '300';
+  if (n.includes('medium'))                            return '500';
+  if (n.includes('semibold')||n.includes('demibold'))  return '600';
+  if (n.includes('extrabold')||n.includes('ultrabold'))return '800';
+  if (n.includes('black')||n.includes('heavy'))        return '900';
+  if (n.includes('bold'))                              return '700';
+  return '400';
+}
+function guessStyle(name) {
+  const n = name.toLowerCase();
+  return (n.includes('italic')||n.includes('oblique')) ? 'italic' : 'normal';
+}
+
+async function loadFontsFromFiles(input) {
+  const files = Array.from(input.files).filter(f => /\.(otf|ttf|woff2?)$/i.test(f.name));
   if (!files.length) return;
-
   for (const file of files) {
-    const b64 = await fileToBase64(file);
-    const ext  = file.name.split('.').pop().toLowerCase();
-    const mime = ext === 'otf' ? 'font/otf' : ext === 'ttf' ? 'font/ttf' : 'font/woff2';
-    const dataUrl = `data:${mime};base64,${b64}`;
-    loadedFonts[file.name] = dataUrl;
-
-    // Eşleşen TRT tanımını bul
-    const def = TRT_FONT_DEFS.find(d => d.file.toLowerCase() === file.name.toLowerCase());
-    if (def) {
-      // @font-face enjekte et
-      const face = `@font-face {
-        font-family: '${def.name}';
-        src: url('${dataUrl}') format('${ext === 'otf' ? 'opentype' : ext === 'ttf' ? 'truetype' : 'woff2'}');
-        font-weight: ${def.weight};
-        font-style: ${def.style};
-      }`;
-      fontStyleEl.textContent += face;
-
-      // FONTS listesine ekle (tekrar ekleme kontrolü)
-      if (!FONTS.find(f => f.name === def.name)) {
-        FONTS.push({ name: def.name, label: def.name, dataUrl });
-      }
-    }
+    if (loadedFonts[file.name]) continue;
+    const b64      = await fileToBase64(file);
+    const ext      = file.name.split('.').pop().toLowerCase();
+    const mime     = ext==='otf'?'font/otf':ext==='ttf'?'font/ttf':ext==='woff2'?'font/woff2':'font/woff';
+    const fmt      = ext==='otf'?'opentype':ext==='ttf'?'truetype':ext==='woff2'?'woff2':'woff';
+    const dataUrl  = `data:${mime};base64,${b64}`;
+    const fontName = fileNameToFontName(file.name);
+    const weight   = guessWeight(file.name);
+    const style    = guessStyle(file.name);
+    await registerFont(file.name, { dataUrl, fontName, weight, style, fmt });
   }
-
-  // Badge listesi güncelle
+  saveFontsToDB();
   updateFontBadges();
-  // Font listelerini yeniden çiz
   buildFontLists();
-  // Eğer henüz seçili font yoksa ilk yüklenen fontu seç
   if (FONTS.length > 0) {
-    if (!FONTS.find(f => f.name === fs.qFont))   { fs.qFont   = FONTS[0].name; }
-    if (!FONTS.find(f => f.name === fs.optFont))  { fs.optFont = FONTS[0].name; }
+    if (!FONTS.find(f => f.name === fs.qFont))   fs.qFont   = FONTS[0].name;
+    if (!FONTS.find(f => f.name === fs.optFont)) fs.optFont = FONTS[0].name;
     saveFonts(); applyFonts(); updateBadge();
   }
 }
 
-function updateFontBadges() {
-  const container = document.getElementById('loadedFontBadges');
-  const count     = document.getElementById('loadedFontCount');
-  const loaded    = TRT_FONT_DEFS.filter(d => loadedFonts[d.file]);
-  count.textContent = `${loaded.length} / 8`;
+// Tek bir fontu sisteme kayıt et (hem belleğe hem @font-face)
+async function registerFont(fileName, entry) {
+  loadedFonts[fileName] = entry;
+  fontStyleEl.textContent += `@font-face {
+    font-family: '${entry.fontName}';
+    src: url('${entry.dataUrl}') format('${entry.fmt}');
+    font-weight: ${entry.weight};
+    font-style: ${entry.style};
+  }`;
+  if (!FONTS.find(f => f.name === entry.fontName))
+    FONTS.push({ name: entry.fontName, label: entry.fontName });
+}
 
-  container.innerHTML = loaded.map(d =>
-    `<span class="trt-badge"><i class="bi bi-check-circle-fill text-success"></i>${d.name.replace('TRT ','')}</span>`
+// Yüklü fontları localStorage'a kaydet
+function saveFontsToDB() {
+  try {
+    localStorage.setItem('pro_loaded_fonts', JSON.stringify(loadedFonts));
+  } catch(e) {
+    // localStorage dolu olabilir (base64 fontlar büyük olabilir)
+    console.warn('Font kayıt hatası:', e);
+  }
+}
+
+// Sayfa açılışında localStorage'dan fontları geri yükle
+async function restoreFontsFromDB() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('pro_loaded_fonts') || '{}');
+    const entries = Object.entries(saved);
+    if (!entries.length) return;
+    for (const [fileName, entry] of entries) {
+      await registerFont(fileName, entry);
+    }
+    updateFontBadges();
+    buildFontLists();
+    applyFonts();
+    updateBadge();
+  } catch(e) {
+    console.warn('Font geri yükleme hatası:', e);
+  }
+}
+
+function updateFontBadges() {
+  const entries = Object.values(loadedFonts);
+  document.getElementById('loadedFontCount').textContent = `${entries.length} font`;
+  document.getElementById('loadedFontBadges').innerHTML = entries.map(e =>
+    `<span class="trt-badge"><i class="bi bi-check-circle-fill text-success"></i>${e.fontName}</span>`
   ).join('');
 }
 
@@ -457,7 +488,7 @@ function fileToBase64(file) {
     fr.readAsDataURL(file);
   });
 }
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 let questions = JSON.parse(localStorage.getItem('pro_questions')) || [];
 let savedBg   = localStorage.getItem('pro_bg') || '';
@@ -466,7 +497,7 @@ let dlMethod   = 'single';
 let correctVal = '';
 
 let fs = JSON.parse(localStorage.getItem('pro_fonts2') || 'null') || {
-  qFont:'TRT Bold', qItalic:false, qBold:true,  qSize:52,
+  qFont:'TRT Bold', qItalic:false, qBold:true,  qSize:40,
   optFont:'TRT Regular', optItalic:false, optBold:true, optSize:30
 };
 
@@ -819,8 +850,11 @@ function renderWebmFallback(element,w,h,durationMs) {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-buildFontLists();
-restoreFontUI();
+restoreFontsFromDB().then(() => {
+  buildFontLists();
+  restoreFontUI();
+  applyFonts();
+});
 renderTable();
 window.addEventListener('resize', applyFonts);
 </script>
