@@ -12,7 +12,17 @@
 <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@latest/build/mp4-muxer.min.js"></script>
 
 <style>
-body { font-family: 'Inter', sans-serif; background: #0f172a; }
+body { font-family: 'Inter', sans-serif; background: #0f172a; overflow-x: hidden; }
+html, body { height: 100%; }
+
+/* Sidebar scrollbar */
+#appSidebar::-webkit-scrollbar { width: 4px; }
+#appSidebar::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+/* Sidebar sadece geniş ekranlarda görünür */
+@media (max-width: 900px) {
+  #appSidebar { display: none !important; }
+}
 
 .preview-wrapper {
   width: 100%; aspect-ratio: 16/9;
@@ -26,10 +36,16 @@ body { font-family: 'Inter', sans-serif; background: #0f172a; }
   display:flex; flex-direction:column; justify-content:center; align-items:center;
   padding:5%; background-size:cover; background-position:center;
 }
+.q-capsule-wrap {
+  width: 85%;
+  margin-bottom: 3%;
+  border-radius: clamp(28px,5vw,60px);
+}
 .q-capsule {
-  background:#fff; width:85%;
+  background:#fff; width:100%;
   padding:2% 5%; border-radius:clamp(28px,5vw,60px);
-  border:4px solid #1e293b; margin-bottom:3%;
+  border:1.5px solid rgba(30,41,59,0.25);
+  overflow: hidden;  
 }
 .q-editable {
   background:transparent; width:100%; font-weight:900;
@@ -40,28 +56,27 @@ body { font-family: 'Inter', sans-serif; background: #0f172a; }
 
 .opt-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:85%; }
 
+.opt-box-wrap {
+  border-radius: 999px;
+}
 .opt-box {
-  background: #f8f9fa;
-  border: 2px solid #adb5bd;
+  background: #ffffff;
+  border: 1.5px solid rgba(173,181,189,0.6);
   border-radius: 999px;
   display:flex; align-items:center;
   padding:0.5% 2%; min-height:34px;
+  overflow: hidden;   
+  width: 100%;
+  box-sizing: border-box;
 }
-.opt-box.correct {
-  background: #146c43 !important;
-  border-color: #fff !important;
-}
-.opt-box.correct .opt-circle { border-color:#fff !important; color:#fff !important; }
-.opt-box.correct .opt-editable { color:#fff !important; }
-.opt-box.light-mode {
-  background: #f8f9fa !important;
-  border-color: #adb5bd !important;
-}
+/* Bootstrap dark mode override */
+.opt-box, .opt-box * { background-color: unset; }
 .opt-circle {
   width:26px; height:26px; border:2px solid #000; border-radius:50%;
   display:flex; align-items:center; justify-content:center;
   font-size:0.8vw; font-weight:900; margin-right:7px; color:#000;
   flex-shrink:0;
+  background: transparent;
 }
 .opt-editable {
   background:transparent; width:100%; font-weight:700;
@@ -118,6 +133,36 @@ body { font-family: 'Inter', sans-serif; background: #0f172a; }
 
 tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
 #dlLabel { font-size:.78rem; padding:5px 10px; border-radius:6px; font-weight:600; }
+
+/* Aranabilir filtre dropdown */
+.filter-dd-btn { background:#1e293b; border:1px solid #334155; color:#94a3b8; border-radius:8px; padding:5px 10px; font-size:.82rem; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap; transition:border-color .15s; }
+.filter-dd-btn:hover { border-color:#6366f1; color:#e2e8f0; }
+/* Tüm renk seçici kutular eşit kare boyutunda */
+input[type=color] {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px;
+  padding: 2px !important;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+input[type=color]::-webkit-color-swatch-wrapper { padding: 2px; }
+input[type=color]::-webkit-color-swatch { border: none; border-radius: 3px; }
+
+.filter-dd-btn .val-label { color:#e2e8f0; font-weight:600; max-width:120px; overflow:hidden; text-overflow:ellipsis; }
+.filter-dd-panel { position:absolute; top:calc(100% + 4px); right:0; z-index:9999; background:#1e293b; border:1px solid #334155; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,.5); width:240px; padding:8px; }
+.filter-dd-search { width:100%; background:#0f172a; border:1px solid #334155; border-radius:6px; color:#e2e8f0; padding:5px 9px; font-size:.82rem; outline:none; margin-bottom:6px; }
+.filter-dd-search::placeholder { color:#475569; }
+.filter-dd-list { max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:1px; }
+.filter-dd-list::-webkit-scrollbar { width:4px; }
+.filter-dd-list::-webkit-scrollbar-thumb { background:#334155; border-radius:4px; }
+.filter-dd-item { padding:6px 10px; border-radius:6px; cursor:pointer; font-size:.82rem; color:#94a3b8; transition:all .1s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.filter-dd-item:hover { background:#334155; color:#e2e8f0; }
+.filter-dd-item.active { background:rgba(99,102,241,.25); color:#a5b4fc; font-weight:600; }
+.filter-dd-item.all-item { color:#64748b; font-style:italic; }
+.filter-dd-item.all-item.active { color:#818cf8; }
+.filter-dd-wrap { position:relative; display:inline-block; }
 </style>
 </head>
 <body>
@@ -129,103 +174,229 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
   </div>
 </div>
 
-<div class="container-fluid py-3" style="max-width:1820px; padding-left:clamp(300px,15vw,420px); padding-right:clamp(300px,15vw,420px);">
+<!-- Ana iki kolonlu layout -->
+<div class="d-flex" style="min-height:100vh;">
 
-  <!-- 1. Üst Bant -->
-  <div class="row g-3 mb-3">
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<div id="appSidebar" style="
+  width: 300px;
+  min-width: 280px;
+  max-width: 340px;
+  background: #0f172a;
+  border-right: 1px solid #1e293b;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  padding: 12px 10px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+">
 
-    <!-- Veri & Excel -->
-    <div class="col-auto" style="min-width:220px;">
-      <div class="card h-100">
-        <div class="card-header py-2">
-          <small class="text-uppercase text-muted fw-bold"><i class="bi bi-table me-1"></i>Veri &amp; Excel</small>
-        </div>
-        <div class="card-body d-flex flex-column gap-2">
-          <button class="btn btn-primary btn-sm" onclick="document.getElementById('fileIn').click()">
-            <i class="bi bi-upload"></i> Excel Yukle
-          </button>
-          <input type="file" id="fileIn" onchange="importExcel(this)" style="display:none;">
-          <button class="btn btn-secondary btn-sm" onclick="exportToExcel()">
-            <i class="bi bi-download"></i> Excel Yedek
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="clearAll()">
-            <i class="bi bi-trash3"></i> Tumunu Sil
-          </button>
-        </div>
-      </div>
+  <!-- Sidebar: Veri & Excel -->
+  <div class="card mb-2">
+    <div class="card-header py-2">
+      <small class="text-uppercase text-muted fw-bold"><i class="bi bi-table me-1"></i>Veri &amp; Excel</small>
     </div>
+    <div class="card-body d-flex flex-column gap-2 py-2">
+      <div class="d-flex gap-1">
+        <button class="btn btn-primary btn-sm flex-fill" onclick="document.getElementById('fileIn').click()">
+          <i class="bi bi-upload"></i> Excel Yükle
+        </button>
+        <button class="btn btn-secondary btn-sm flex-fill" onclick="exportToExcel()">
+          <i class="bi bi-download"></i> Excel Yedek
+        </button>
+      </div>
+      <input type="file" id="fileIn" onchange="importExcel(this)" style="display:none;">
+      <hr class="my-1">
+      <div class="d-flex gap-1">
+        <button class="btn btn-warning btn-sm flex-fill text-dark fw-bold" onclick="exportFullBackup()">
+          <i class="bi bi-cloud-arrow-down"></i> Tam Yedek
+        </button>
+        <button class="btn btn-outline-warning btn-sm flex-fill" onclick="document.getElementById('backupIn').click()">
+          <i class="bi bi-cloud-arrow-up"></i> Yedek Yükle
+        </button>
+      </div>
+      <input type="file" id="backupIn" accept=".json" onchange="importFullBackup(this)" style="display:none;">
+      <hr class="my-1">
+      <button class="btn btn-danger btn-sm" onclick="clearAll()">
+        <i class="bi bi-trash3"></i> Tumunu Sil
+      </button>
+    </div>
+  </div>
 
-    <!-- Dışa Aktar -->
-    <div class="col">
-      <div class="card h-100">
-        <div class="card-header py-2">
-          <small class="text-uppercase text-muted fw-bold"><i class="bi bi-box-arrow-up me-1"></i>Disa Aktar</small>
+  <!-- Sidebar: Dışa Aktar -->
+  <div class="card mb-2">
+    <div class="card-header py-2">
+      <small class="text-uppercase text-muted fw-bold"><i class="bi bi-box-arrow-up me-1"></i>Disa Aktar</small>
+    </div>
+    <div class="card-body py-2">
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <span class="text-muted small fw-bold w-100"><i class="bi bi-aspect-ratio me-1"></i>Boyut</span>
+        <input type="number" class="form-control form-control-sm" id="wI" value="1920" style="width:72px;">
+        <span class="text-muted">x</span>
+        <input type="number" class="form-control form-control-sm" id="hI" value="1080" style="width:72px;">
+        <span class="text-muted small">px</span>
+      </div>
+      <hr class="my-2">
+      <div class="d-flex flex-column gap-2 mb-2">
+        <span class="text-muted small fw-bold"><i class="bi bi-collection me-1"></i>İçerik</span>
+        <select class="form-select form-select-sm" id="downloadMode">
+          <option value="both">Soru + Cevapli</option>
+          <option value="onlyQ">Sadece Soru</option>
+          <option value="onlyA">Sadece Cevapli</option>
+        </select>
+        <div class="dropdown">
+          <button class="btn btn-outline-secondary btn-sm dropdown-toggle w-100" data-bs-toggle="dropdown">
+            <i class="bi bi-download me-1"></i>Indirme Yontemi
+          </button>
+          <ul class="dropdown-menu shadow" style="min-width:240px;">
+            <li>
+              <a class="dropdown-item d-flex align-items-start gap-2 py-2" href="#" onclick="setDlMethod('single')">
+                <i class="bi bi-files fs-5 mt-1 text-primary flex-shrink-0"></i>
+                <span><strong class="d-block">Tek tek indir</strong><small class="text-muted">Her dosya ayri ayri tarayiciya indirilir</small></span>
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item d-flex align-items-start gap-2 py-2" href="#" onclick="setDlMethod('zip')">
+                <i class="bi bi-file-zip fs-5 mt-1 text-warning flex-shrink-0"></i>
+                <span><strong class="d-block">ZIP olarak indir</strong><small class="text-muted">Tum dosyalar tek ZIP paketinde</small></span>
+              </a>
+            </li>
+          </ul>
         </div>
-        <div class="card-body">
-          <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-            <span class="text-muted small fw-bold" style="min-width:100px;"><i class="bi bi-aspect-ratio me-1"></i>Boyut</span>
-            <input type="number" class="form-control form-control-sm" id="wI" value="1920" style="width:80px;">
-            <span class="text-muted">x</span>
-            <input type="number" class="form-control form-control-sm" id="hI" value="1080" style="width:80px;">
-            <span class="text-muted small">px</span>
-          </div>
-          <hr class="my-2">
-          <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
-            <span class="text-muted small fw-bold" style="min-width:100px;"><i class="bi bi-collection me-1"></i>Icerik</span>
-            <select class="form-select form-select-sm" id="downloadMode" style="max-width:200px;">
-              <option value="both">Soru + Cevapli</option>
-              <option value="onlyQ">Sadece Soru</option>
-              <option value="onlyA">Sadece Cevapli</option>
-            </select>
-            <div class="dropdown">
-              <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                <i class="bi bi-download me-1"></i>Indirme Yontemi
-              </button>
-              <ul class="dropdown-menu shadow" style="min-width:260px;">
-                <li>
-                  <a class="dropdown-item d-flex align-items-start gap-2 py-2" href="#" onclick="setDlMethod('single')">
-                    <i class="bi bi-files fs-5 mt-1 text-primary flex-shrink-0"></i>
-                    <span><strong class="d-block">Tek tek indir</strong><small class="text-muted">Her dosya ayri ayri tarayiciya indirilir</small></span>
-                  </a>
-                </li>
-                <li>
-                  <a class="dropdown-item d-flex align-items-start gap-2 py-2" href="#" onclick="setDlMethod('zip')">
-                    <i class="bi bi-file-zip fs-5 mt-1 text-warning flex-shrink-0"></i>
-                    <span><strong class="d-block">ZIP olarak indir</strong><small class="text-muted">Tum dosyalar tek ZIP paketinde</small></span>
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <span id="dlLabel" class="badge bg-primary">&#128196; Tek tek</span>
-          </div>
-          <hr class="my-2">
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="text-muted small fw-bold" style="min-width:100px;"><i class="bi bi-send me-1"></i>Aktar</span>
-            <button class="btn btn-primary btn-sm" onclick="processAll('image')"><i class="bi bi-image"></i> Gorsel Indir</button>
-            <button class="btn btn-danger btn-sm" onclick="processAll('video')"><i class="bi bi-camera-video"></i> MP4 Indir</button>
-            <button class="btn btn-warning btn-sm text-dark fw-bold" onclick="processAll('both')"><i class="bi bi-layers"></i> Gorsel + MP4</button>
-            <div class="d-flex align-items-center gap-1">
-              <i class="bi bi-stopwatch text-muted small"></i>
-              <input type="number" class="form-control form-control-sm" id="vidDuration" value="5" min="1" max="60" style="width:56px;">
-              <span class="text-muted small">sn</span>
-            </div>
-          </div>
+        <span id="dlLabel" class="badge bg-primary">&#128196; Tek tek</span>
+      </div>
+      <hr class="my-2">
+      <div class="d-flex flex-column gap-2">
+        <span class="text-muted small fw-bold"><i class="bi bi-send me-1"></i>Aktar</span>
+        <div class="d-flex gap-1 flex-wrap">
+          <button class="btn btn-primary btn-sm flex-fill" onclick="processAll('image')"><i class="bi bi-image"></i> Gorsel</button>
+          <button class="btn btn-danger btn-sm flex-fill" onclick="processAll('video')"><i class="bi bi-camera-video"></i> MP4</button>
+        </div>
+        <button class="btn btn-warning btn-sm text-dark fw-bold w-100" onclick="processAll('both')"><i class="bi bi-layers"></i> Gorsel + MP4</button>
+        <div class="d-flex align-items-center gap-1">
+          <i class="bi bi-stopwatch text-muted small"></i>
+          <span class="text-muted small">Süre:</span>
+          <input type="number" class="form-control form-control-sm" id="vidDuration" value="5" min="1" max="60" style="width:56px;">
+          <span class="text-muted small">sn</span>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Sidebar: Stil Ayarları (Soru + Şık + Doğru Şık tek kart) -->
+  <div class="card mb-2">
+    <div class="card-header py-2">
+      <small class="text-uppercase text-muted fw-bold"><i class="bi bi-palette2 me-1"></i>Stil Ayarları</small>
+    </div>
+    <div class="card-body py-2 d-flex flex-column gap-3">
+
+      <!-- SORU KUTUSU -->
+      <div>
+        <div class="d-flex align-items-center gap-1 mb-1">
+          <span class="badge bg-secondary" style="font-size:.65rem;letter-spacing:.5px;">SORU</span>
+        </div>
+        <div class="d-flex align-items-center gap-1 flex-wrap">
+          <div class="d-flex align-items-center gap-1" title="Zemin rengi">
+            <i class="bi bi-square-fill text-secondary" style="font-size:.7rem;"></i>
+            <input type="color" id="qBgColor" value="#ffffff" oninput="applyStyleSettings()" style="width:30px;height:26px;border:none;border-radius:4px;cursor:pointer;padding:1px;">
+          </div>
+          <div class="d-flex align-items-center gap-1" title="Metin rengi">
+            <i class="bi bi-type text-secondary" style="font-size:.7rem;"></i>
+            <input type="color" id="qTextColor" value="#000000" oninput="applyStyleSettings()" style="width:30px;height:26px;border:none;border-radius:4px;cursor:pointer;padding:1px;">
+          </div>
+          <div class="vr mx-1"></div>
+          <div class="d-flex align-items-center gap-1" title="Çerçeve">
+            <i class="bi bi-border-style text-secondary" style="font-size:.7rem;"></i>
+            <input type="color" id="qBorderColor" value="#6366f1" oninput="applyStyleSettings()" style="width:30px;height:26px;border:none;border-radius:4px;cursor:pointer;padding:1px;">
+            <input type="range" id="qBorderWidth" min="0" max="12" value="2" oninput="applyStyleSettings()" style="width:55px;" title="Çerçeve kalınlığı">
+            <span class="badge bg-secondary" id="qBorderWidthVal" style="font-size:.65rem;">2px</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:#1e293b;"></div>
+
+      <!-- ŞIK KUTULARI -->
+      <div>
+        <div class="d-flex align-items-center gap-1 mb-1">
+          <span class="badge bg-secondary" style="font-size:.65rem;letter-spacing:.5px;">ŞIK</span>
+        </div>
+        <div class="d-flex align-items-center gap-1 flex-wrap">
+          <div class="d-flex align-items-center gap-1" title="Zemin rengi">
+            <i class="bi bi-square-fill text-secondary" style="font-size:.7rem;"></i>
+            <input type="color" id="optBgColor" value="#ffffff" oninput="applyStyleSettings()" style="width:30px;height:26px;border:none;border-radius:4px;cursor:pointer;padding:1px;">
+          </div>
+          <div class="d-flex align-items-center gap-1" title="Metin rengi">
+            <i class="bi bi-type text-secondary" style="font-size:.7rem;"></i>
+            <input type="color" id="optTextColor" value="#000000" oninput="applyStyleSettings()" style="width:30px;height:26px;border:none;border-radius:4px;cursor:pointer;padding:1px;">
+          </div>
+          <div class="vr mx-1"></div>
+          <div class="d-flex align-items-center gap-1" title="Çerçeve">
+            <i class="bi bi-border-style text-secondary" style="font-size:.7rem;"></i>
+            <input type="color" id="optBorderColor" value="#6366f1" oninput="applyStyleSettings()" style="width:30px;height:26px;border:none;border-radius:4px;cursor:pointer;padding:1px;">
+            <input type="range" id="optBorderWidth" min="0" max="12" value="2" oninput="applyStyleSettings()" style="width:55px;" title="Çerçeve kalınlığı">
+            <span class="badge bg-secondary" id="optBorderWidthVal" style="font-size:.65rem;">2px</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:#1e293b;"></div>
+
+      <!-- DOĞRU ŞIK -->
+      <div>
+        <div class="d-flex align-items-center gap-1 mb-1">
+          <span class="badge" style="font-size:.65rem;letter-spacing:.5px;background:#146c43;color:#4ade80;"><i class="bi bi-check-circle me-1"></i>DOĞRU ŞIK</span>
+        </div>
+        <div class="d-flex align-items-center gap-1 flex-wrap">
+          <div class="d-flex align-items-center gap-1" title="Zemin rengi">
+            <i class="bi bi-square-fill text-secondary" style="font-size:.7rem;"></i>
+            <input type="color" id="corrBgColor" value="#146c43" oninput="applyStyleSettings()" style="width:30px;height:26px;border:none;border-radius:4px;cursor:pointer;padding:1px;">
+          </div>
+          <div class="d-flex align-items-center gap-1" title="Metin rengi">
+            <i class="bi bi-type text-secondary" style="font-size:.7rem;"></i>
+            <input type="color" id="corrTextColor" value="#ffffff" oninput="applyStyleSettings()" style="width:30px;height:26px;border:none;border-radius:4px;cursor:pointer;padding:1px;">
+          </div>
+          <div class="vr mx-1"></div>
+          <div class="d-flex align-items-center gap-1" title="Çerçeve">
+            <i class="bi bi-border-style text-secondary" style="font-size:.7rem;"></i>
+            <input type="color" id="corrBorderColor" value="#ffffff" oninput="applyStyleSettings()" style="width:30px;height:26px;border:none;border-radius:4px;cursor:pointer;padding:1px;">
+            <input type="range" id="corrBorderWidth" min="0" max="12" value="2" oninput="applyStyleSettings()" style="width:55px;" title="Çerçeve kalınlığı">
+            <span class="badge bg-secondary" id="corrBorderWidthVal" style="font-size:.65rem;">2px</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:1px;background:#1e293b;"></div>
+      <button class="btn btn-outline-secondary btn-sm" style="align-self:flex-start;" onclick="resetStyleSettings()">
+        <i class="bi bi-arrow-counterclockwise"></i> Sıfırla
+      </button>
+
+    </div>
+  </div>
+
+</div>
+<!-- ═══════════════ /SIDEBAR ═══════════════ -->
+
+<!-- ═══════════════ ANA İÇERİK ═══════════════ -->
+<div style="flex:1; min-width:0; overflow-y:auto; padding: 12px 16px;">
+
   <!-- 2. Önizleme -->
   <div class="preview-wrapper mb-3">
     <div id="liveEditor" class="live-editor-container">
-      <div class="q-capsule">
-        <div id="liveQ" class="q-editable" contenteditable="true" data-ph="Soruyu buraya yazin..."></div>
+      <div class="q-capsule-wrap" id="live-q-wrap">
+        <div class="q-capsule">
+          <div id="liveQ" class="q-editable" contenteditable="true" data-ph="Soruyu buraya yazin..."></div>
+        </div>
       </div>
       <div class="opt-grid">
-        <div class="opt-box light-mode" id="live-box-a"><div class="opt-circle">A</div><div id="liveA" class="opt-editable" contenteditable="true" data-ph="A Seçeneği"></div></div>
-        <div class="opt-box light-mode" id="live-box-b"><div class="opt-circle">B</div><div id="liveB" class="opt-editable" contenteditable="true" data-ph="B Seçeneği"></div></div>
-        <div class="opt-box light-mode" id="live-box-c"><div class="opt-circle">C</div><div id="liveC" class="opt-editable" contenteditable="true" data-ph="C Seçeneği"></div></div>
-        <div class="opt-box light-mode" id="live-box-d"><div class="opt-circle">D</div><div id="liveD" class="opt-editable" contenteditable="true" data-ph="D Seçeneği"></div></div>
+        <div class="opt-box-wrap" id="wrap-box-a"><div class="opt-box light-mode" id="live-box-a" style="background:#ffffff;"><div class="opt-circle" style="background:transparent;color:#000;border-color:#000;">A</div><div id="liveA" class="opt-editable" contenteditable="true" data-ph="A Seçeneği"></div></div></div>
+        <div class="opt-box-wrap" id="wrap-box-b"><div class="opt-box light-mode" id="live-box-b" style="background:#ffffff;"><div class="opt-circle" style="background:transparent;color:#000;border-color:#000;">B</div><div id="liveB" class="opt-editable" contenteditable="true" data-ph="B Seçeneği"></div></div></div>
+        <div class="opt-box-wrap" id="wrap-box-c"><div class="opt-box light-mode" id="live-box-c" style="background:#ffffff;"><div class="opt-circle" style="background:transparent;color:#000;border-color:#000;">C</div><div id="liveC" class="opt-editable" contenteditable="true" data-ph="C Seçeneği"></div></div></div>
+        <div class="opt-box-wrap" id="wrap-box-d"><div class="opt-box light-mode" id="live-box-d" style="background:#ffffff;"><div class="opt-circle" style="background:transparent;color:#000;border-color:#000;">D</div><div id="liveD" class="opt-editable" contenteditable="true" data-ph="D Seçeneği"></div></div></div>
       </div>
     </div>
   </div>
@@ -233,6 +404,21 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
   <!-- 3. Form Barı -->
   <div class="card mb-3">
     <div class="card-body py-2 d-flex align-items-center gap-2 flex-wrap">
+
+      <!-- Kategori & Etiket -->
+      <div class="d-flex align-items-center gap-2 flex-wrap me-2">
+        <div class="input-group input-group-sm" style="width:180px;">
+          <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-folder2"></i></span>
+          <input type="text" class="form-control form-control-sm bg-dark border-secondary text-light" id="inputKategori" placeholder="Kategori" list="kategoriList" autocomplete="off">
+          <datalist id="kategoriList"></datalist>
+        </div>
+        <div class="input-group input-group-sm" style="width:200px;">
+          <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-tags"></i></span>
+          <input type="text" class="form-control form-control-sm bg-dark border-secondary text-light" id="inputEtiket" placeholder="Etiket (virgülle ayır)" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="vr mx-1"></div>
 
       <span class="text-muted small fw-bold me-1">Doğru Seçenek:</span>
       <div class="btn-group correct-btn-group" role="group" id="correctBtnGroup">
@@ -318,8 +504,45 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
 
   <!-- 4. Soru Listesi -->
   <div class="card">
-    <div class="card-header py-2">
+    <div class="card-header py-2 d-flex align-items-center gap-2 flex-wrap">
       <small class="text-uppercase text-muted fw-bold"><i class="bi bi-list-ul me-1"></i>Soru Listesi</small>
+      <span class="badge bg-secondary" id="soruSayac">0 soru</span>
+      <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+        <!-- Arama -->
+        <div class="input-group input-group-sm" style="width:220px;">
+          <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control form-control-sm bg-dark border-secondary text-light" id="aramaKutusu" placeholder="Sorularda ara..." oninput="renderTable()">
+          <button class="btn btn-outline-secondary btn-sm" onclick="document.getElementById('aramaKutusu').value='';renderTable();" title="Temizle"><i class="bi bi-x"></i></button>
+        </div>
+        <!-- Kategori Filtresi (aranabilir) -->
+        <div class="filter-dd-wrap" id="katWrap">
+          <button class="filter-dd-btn" onclick="toggleFilterDD('kat')" id="katBtn">
+            <i class="bi bi-folder2 text-primary"></i>
+            <span class="val-label" id="katLabel">Tüm Kategoriler</span>
+            <i class="bi bi-chevron-down ms-1" style="font-size:.7rem;"></i>
+          </button>
+          <div class="filter-dd-panel" id="katPanel" style="display:none;">
+            <input class="filter-dd-search" type="text" placeholder="Kategori ara..." id="katSearch" oninput="renderFilterList('kat')" autocomplete="off">
+            <div class="filter-dd-list" id="katList"></div>
+          </div>
+        </div>
+        <!-- Etiket Filtresi (aranabilir) -->
+        <div class="filter-dd-wrap" id="etWrap">
+          <button class="filter-dd-btn" onclick="toggleFilterDD('et')" id="etBtn">
+            <i class="bi bi-tags text-info"></i>
+            <span class="val-label" id="etLabel">Tüm Etiketler</span>
+            <i class="bi bi-chevron-down ms-1" style="font-size:.7rem;"></i>
+          </button>
+          <div class="filter-dd-panel" id="etPanel" style="display:none;">
+            <input class="filter-dd-search" type="text" placeholder="Etiket ara..." id="etSearch" oninput="renderFilterList('et')" autocomplete="off">
+            <div class="filter-dd-list" id="etList"></div>
+          </div>
+        </div>
+        <!-- Filtreleri Temizle -->
+        <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()" title="Filtreleri temizle" id="clearFiltersBtn" style="display:none;">
+          <i class="bi bi-x-circle"></i>
+        </button>
+      </div>
     </div>
     <div class="card-body p-0">
       <table class="table table-hover table-dark mb-0">
@@ -327,16 +550,26 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
           <tr>
             <th width="40"><input type="checkbox" class="form-check-input" onclick="toggleAll(this)"></th>
             <th>Soru Metni</th>
+            <th width="110" class="text-center">Kategori</th>
+            <th width="150" class="text-center">Etiketler</th>
             <th width="80" class="text-center">Seçenek</th>
             <th width="120" class="text-end">Islem</th>
           </tr>
         </thead>
         <tbody id="listBody"></tbody>
       </table>
+      <div id="emptyMsg" class="text-center text-muted py-4" style="display:none;">
+        <i class="bi bi-search fs-4 d-block mb-2 opacity-50"></i>
+        <span>Aramanıza uygun soru bulunamadı.</span>
+      </div>
     </div>
   </div>
 
 </div>
+<!-- ═══════════════ /ANA İÇERİK ═══════════════ -->
+
+</div>
+<!-- ═══════════════ /ANA LAYOUT ═══════════════ -->
 
 <!-- Ekran dışı render alanı -->
 <div id="render-stage">
@@ -344,29 +577,38 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
     width:1920px; height:1080px;
     background-color:#2d3748;
     display:flex; flex-direction:column; justify-content:center; align-items:center;
-    padding:80px; box-sizing:border-box;
-    background-size:cover; background-position:center;">
+    padding:80px 320px; box-sizing:border-box;
+    background-size:cover; background-position:center;
+    overflow:visible;">
 
-    <div style="background:#fff; width:80%; padding:40px 80px; border-radius:80px; border:8px solid #1e293b; margin-bottom:50px;">
-      <div id="r-q" style="font-weight:900; color:#000; text-align:center; word-break:break-word; white-space:pre-wrap; line-height:1.25;"></div>
+    <div id="r-q-wrap" style="background:#fff; width:100%; padding:40px 80px; border-radius:80px; border:2px solid rgba(30,41,59,0.2); margin-bottom:50px;">
+        <div id="r-q" style="font-weight:900; color:#000; text-align:center; word-break:break-word; white-space:pre-wrap; line-height:1.25;"></div>
     </div>
 
-    <div style="width:80%; display:grid; grid-template-columns:1fr 1fr; gap:26px;">
-      <div id="box-a" style="border:5px solid #adb5bd; border-radius:999px; display:flex; align-items:center; padding:16px 16px; background:#f8f9fa; min-height:72px;">
-        <div style="width:58px;height:58px;font-size:30px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:18px;flex-shrink:0;color:#000;">A</div>
-        <div id="r-a" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
+    <div style="width:100%; display:grid; grid-template-columns:1fr 1fr; gap:26px; padding:30px 0;">
+      <div id="rwrap-a" style="border-radius:999px; padding:0;">
+        <div id="box-a" style="border-radius:999px; display:flex; align-items:center; padding:16px 20px; background:#ffffff; min-height:72px; border:2px solid rgba(173,181,189,0.5);">
+          <div id="rcircle-a" style="width:58px;height:58px;border:1.5px solid rgba(0,0,0,0.5);border-radius:50%;display:table;margin-right:18px;flex-shrink:0;background:transparent;box-sizing:border-box;"><span style="display:table-cell;vertical-align:middle;text-align:center;font-size:24px;font-weight:900;color:#000;line-height:1;">A</span></div>
+          <div id="r-a" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
+        </div>
       </div>
-      <div id="box-b" style="border:5px solid #adb5bd; border-radius:999px; display:flex; align-items:center; padding:16px 16px; background:#f8f9fa; min-height:72px;">
-        <div style="width:58px;height:58px;font-size:30px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:18px;flex-shrink:0;color:#000;">B</div>
-        <div id="r-b" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
+      <div id="rwrap-b" style="border-radius:999px; padding:0;">
+        <div id="box-b" style="border-radius:999px; display:flex; align-items:center; padding:16px 20px; background:#ffffff; min-height:72px; border:2px solid rgba(173,181,189,0.5);">
+          <div id="rcircle-b" style="width:58px;height:58px;border:1.5px solid rgba(0,0,0,0.5);border-radius:50%;display:table;margin-right:18px;flex-shrink:0;background:transparent;box-sizing:border-box;"><span style="display:table-cell;vertical-align:middle;text-align:center;font-size:24px;font-weight:900;color:#000;line-height:1;">B</span></div>
+          <div id="r-b" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
+        </div>
       </div>
-      <div id="box-c" style="border:5px solid #adb5bd; border-radius:999px; display:flex; align-items:center; padding:16px 16px; background:#f8f9fa; min-height:72px;">
-        <div style="width:58px;height:58px;font-size:30px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:18px;flex-shrink:0;color:#000;">C</div>
-        <div id="r-c" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
+      <div id="rwrap-c" style="border-radius:999px; padding:0;">
+        <div id="box-c" style="border-radius:999px; display:flex; align-items:center; padding:16px 20px; background:#ffffff; min-height:72px; border:2px solid rgba(173,181,189,0.5);">
+          <div id="rcircle-c" style="width:58px;height:58px;border:1.5px solid rgba(0,0,0,0.5);border-radius:50%;display:table;margin-right:18px;flex-shrink:0;background:transparent;box-sizing:border-box;"><span style="display:table-cell;vertical-align:middle;text-align:center;font-size:24px;font-weight:900;color:#000;line-height:1;">C</span></div>
+          <div id="r-c" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
+        </div>
       </div>
-      <div id="box-d" style="border:5px solid #adb5bd; border-radius:999px; display:flex; align-items:center; padding:16px 16px; background:#f8f9fa; min-height:72px;">
-        <div style="width:58px;height:58px;font-size:30px;border:2px solid #000;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;margin-right:18px;flex-shrink:0;color:#000;">D</div>
-        <div id="r-d" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
+      <div id="rwrap-d" style="border-radius:999px; padding:0;">
+        <div id="box-d" style="border-radius:999px; display:flex; align-items:center; padding:16px 20px; background:#ffffff; min-height:72px; border:2px solid rgba(173,181,189,0.5);">
+          <div id="rcircle-d" style="width:58px;height:58px;border:1.5px solid rgba(0,0,0,0.5);border-radius:50%;display:table;margin-right:18px;flex-shrink:0;background:transparent;box-sizing:border-box;"><span style="display:table-cell;vertical-align:middle;text-align:center;font-size:24px;font-weight:900;color:#000;line-height:1;">D</span></div>
+          <div id="r-d" style="font-weight:700;color:#000;word-break:break-word;white-space:pre-wrap;line-height:1.3;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -491,6 +733,17 @@ function fileToBase64(file) {
 
 
 let questions = JSON.parse(localStorage.getItem('pro_questions')) || [];
+
+// ─── ID sistemi ───────────────────────────────────────────────────────────────
+// Mevcut sorulara id yoksa ver
+function ensureIds() {
+  let changed = false;
+  questions.forEach(q => {
+    if (!q._id) { q._id = Date.now() + Math.random().toString(36).slice(2,7); changed = true; }
+  });
+  if (changed) localStorage.setItem('pro_questions', JSON.stringify(questions));
+}
+ensureIds();
 let savedBg   = localStorage.getItem('pro_bg') || '';
 let editingIdx = null;
 let dlMethod   = 'single';
@@ -515,6 +768,7 @@ function setCorrect(val) {
     box.classList.remove('correct','light-mode');
     box.classList.add(val !== '' && l === val ? 'correct' : 'light-mode');
   });
+  setTimeout(applyStyleSettings, 0);
 }
 setCorrect('');
 
@@ -658,20 +912,42 @@ function showProgress(s) { document.getElementById('progressOverlay').classList.
 // ─── Form ─────────────────────────────────────────────────────────────────────
 const getEd = id => document.getElementById(id).innerText.trim();
 const setEd = (id,v) => document.getElementById(id).innerText = v||'';
-function clearForm() { ['liveQ','liveA','liveB','liveC','liveD'].forEach(id => setEd(id,'')); setCorrect(''); }
-function getFormData() { return { Soru:getEd('liveQ'),A:getEd('liveA'),B:getEd('liveB'),C:getEd('liveC'),D:getEd('liveD'),Dogru:correctVal }; }
+function clearForm() { ['liveQ','liveA','liveB','liveC','liveD'].forEach(id => setEd(id,'')); setCorrect(''); document.getElementById('inputKategori').value=''; document.getElementById('inputEtiket').value=''; }
+function getFormData() {
+  return {
+    Soru:getEd('liveQ'), A:getEd('liveA'), B:getEd('liveB'), C:getEd('liveC'), D:getEd('liveD'),
+    Dogru:correctVal,
+    Kategori:document.getElementById('inputKategori').value.trim(),
+    Etiketler:document.getElementById('inputEtiket').value.trim()
+  };
+}
+function saveNew() {
+  const q = getFormData();
+  if (!q.Soru) return alert('Soru bos!');
+  q._id = Date.now() + Math.random().toString(36).slice(2,7);
+  questions.push(q);
+  save(); clearForm();
+}
+function doUpdate() {
+  if (editingIdx===null) return;
+  const q = getFormData();
+  if (!q.Soru) return alert('Soru bos!');
+  q._id = questions[editingIdx]._id || (Date.now() + Math.random().toString(36).slice(2,7));
+  questions[editingIdx] = q;
+  editingIdx = null; setEditMode(false); save(); clearForm();
+}
 function setEditMode(on) {
   document.getElementById('saveBtn').style.display   = on ? 'none'        : 'inline-flex';
   document.getElementById('updateBtn').style.display = on ? 'inline-flex' : 'none';
   document.getElementById('cancelBtn').style.display = on ? 'inline-flex' : 'none';
 }
-function saveNew()   { const q=getFormData(); if(!q.Soru) return alert('Soru bos!'); questions.push(q); save(); clearForm(); }
-function doUpdate()  { if(editingIdx===null) return; const q=getFormData(); if(!q.Soru) return alert('Soru bos!'); questions[editingIdx]=q; editingIdx=null; setEditMode(false); save(); clearForm(); }
 function cancelEdit(){ editingIdx=null; setEditMode(false); clearForm(); }
 function editQ(i)    {
   editingIdx=i; const q=questions[i];
   setEd('liveQ',q.Soru); setEd('liveA',q.A); setEd('liveB',q.B); setEd('liveC',q.C); setEd('liveD',q.D);
   setCorrect((q.Dogru||'').toLowerCase());
+  document.getElementById('inputKategori').value = q.Kategori||'';
+  document.getElementById('inputEtiket').value   = q.Etiketler||'';
   setEditMode(true); window.scrollTo({top:0,behavior:'smooth'});
 }
 function deleteQ(i)  { if(confirm('Silinsin mi?')) { questions.splice(i,1); save(); } }
@@ -679,11 +955,102 @@ function toggleAll(src) { document.querySelectorAll('.sel-q').forEach(cb => cb.c
 function clearAll()  { if(confirm('Tum sorular silinecek!')) { questions=[]; save(); } }
 function save()      { localStorage.setItem('pro_questions',JSON.stringify(questions)); renderTable(); }
 
+// ─── Aranabilir Filtre Dropdown ───────────────────────────────────────────────
+let activeKat = '';
+let activeEt  = '';
+
+function toggleFilterDD(type) {
+  const panel = document.getElementById(type+'Panel');
+  const other = type==='kat' ? 'et' : 'kat';
+  document.getElementById(other+'Panel').style.display = 'none';
+  const open = panel.style.display === 'none';
+  panel.style.display = open ? 'block' : 'none';
+  if (open) {
+    document.getElementById(type+'Search').value = '';
+    renderFilterList(type);
+    setTimeout(() => document.getElementById(type+'Search').focus(), 50);
+  }
+}
+
+function renderFilterList(type) {
+  const search = (document.getElementById(type+'Search')?.value||'').toLowerCase();
+  const active = type==='kat' ? activeKat : activeEt;
+  const items  = type==='kat'
+    ? [...new Set(questions.map(q=>q.Kategori||'').filter(Boolean))].sort()
+    : [...new Set(questions.flatMap(q=>(q.Etiketler||'').split(',').map(e=>e.trim()).filter(Boolean)))].sort();
+  const filtered = items.filter(i => i.toLowerCase().includes(search));
+  const listEl   = document.getElementById(type+'List');
+  const allLabel = type==='kat' ? 'Tüm Kategoriler' : 'Tüm Etiketler';
+  listEl.innerHTML =
+    `<div class="filter-dd-item all-item ${active===''?'active':''}" onclick="setFilter('${type}','','${allLabel}')">${allLabel}</div>` +
+    (filtered.length
+      ? filtered.map(v => `<div class="filter-dd-item ${active===v?'active':''}" onclick="setFilter('${type}','${v.replace(/'/g,"\\'")}','${v.replace(/'/g,"\\'")}')">${v}</div>`).join('')
+      : `<div class="text-muted small text-center py-2">Sonuç yok</div>`);
+}
+
+function setFilter(type, val, label) {
+  if (type==='kat') activeKat = val;
+  else              activeEt  = val;
+  document.getElementById(type+'Label').textContent = label;
+  document.getElementById(type+'Panel').style.display = 'none';
+  const showClear = activeKat!=='' || activeEt!=='' || (document.getElementById('aramaKutusu')?.value||'')!=='';
+  document.getElementById('clearFiltersBtn').style.display = showClear ? 'inline-flex' : 'none';
+  renderTable();
+}
+
+function clearFilters() {
+  activeKat = ''; activeEt = '';
+  document.getElementById('katLabel').textContent = 'Tüm Kategoriler';
+  document.getElementById('etLabel').textContent  = 'Tüm Etiketler';
+  document.getElementById('aramaKutusu').value = '';
+  document.getElementById('clearFiltersBtn').style.display = 'none';
+  renderTable();
+}
+
+// Dışarı tıklayınca kapat
+document.addEventListener('click', e => {
+  ['kat','et'].forEach(t => {
+    const wrap = document.getElementById(t+'Wrap');
+    if (wrap && !wrap.contains(e.target)) document.getElementById(t+'Panel').style.display = 'none';
+  });
+});
+
 function renderTable() {
-  document.getElementById('listBody').innerHTML = questions.map((q,i) => `
+  const ara    = (document.getElementById('aramaKutusu')?.value||'').toLowerCase().trim();
+
+  // Datalist güncelle (form alanı için)
+  const tumKat = [...new Set(questions.map(q=>q.Kategori||'').filter(Boolean))].sort();
+  const katList = document.getElementById('kategoriList');
+  if (katList) katList.innerHTML = tumKat.map(k=>`<option value="${k}">`).join('');
+
+  const filtered = questions.map((q,i)=>({q,i})).filter(({q})=>{
+    const soruText = (q.Soru||'').toLowerCase();
+    const kat      = q.Kategori||'';
+    const etArr    = (q.Etiketler||'').split(',').map(e=>e.trim()).filter(Boolean);
+    if (ara      && !soruText.includes(ara))      return false;
+    if (activeKat && kat !== activeKat)           return false;
+    if (activeEt  && !etArr.includes(activeEt))  return false;
+    return true;
+  });
+
+  document.getElementById('soruSayac').textContent = `${filtered.length}/${questions.length} soru`;
+  const emptyMsg = document.getElementById('emptyMsg');
+  if (emptyMsg) emptyMsg.style.display = filtered.length===0 ? 'block' : 'none';
+
+  document.getElementById('listBody').innerHTML = filtered.map(({q,i}) => {
+    const etBadges = (q.Etiketler||'').split(',').map(e=>e.trim()).filter(Boolean)
+      .map(e=>`<span class="badge me-1" style="background:#4f46e5;">${e}</span>`).join('');
+    return `
     <tr class="q-row">
       <td><input type="checkbox" class="form-check-input sel-q" data-idx="${i}" onclick="event.stopPropagation()"></td>
-      <td onclick="editQ(${i})" title="Duzenle">${(q.Soru||'').substring(0,110)}${(q.Soru||'').length>110?'...':''}</td>
+      <td onclick="editQ(${i})" title="Duzenle">
+        <div style="font-size:.65rem;color:#64748b;margin-bottom:2px;font-family:monospace;">#${String(q._id||'').slice(-6)}</div>
+        ${(q.Soru||'').substring(0,100)}${(q.Soru||'').length>100?'...':''}
+      </td>
+      <td class="text-center">
+        ${q.Kategori ? `<span class="badge bg-primary">${q.Kategori}</span>` : '<span class="text-muted small">—</span>'}
+      </td>
+      <td class="text-center" style="max-width:150px;white-space:normal;">${etBadges||'<span class="text-muted small">—</span>'}</td>
       <td class="text-center">
         ${q.Dogru ? '<span class="badge bg-success">'+q.Dogru.toUpperCase()+'</span>' : '<span class="badge bg-secondary">?</span>'}
       </td>
@@ -691,48 +1058,280 @@ function renderTable() {
         <button class="btn btn-outline-info btn-sm me-1" onclick="event.stopPropagation();editQ(${i})"><i class="bi bi-pencil"></i></button>
         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteQ(${i})"><i class="bi bi-trash3"></i></button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 
 function importExcel(input) {
   const fr = new FileReader();
   fr.onload = e => {
-    const wb = XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-    questions = [...questions, ...XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]])];
+    const wb   = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    let added = 0, updated = 0;
+    rows.forEach(row => {
+      const rid = row._id ? String(row._id).trim() : null;
+      if (rid) {
+        const idx = questions.findIndex(q => String(q._id) === rid);
+        if (idx !== -1) {
+          // ID eşleşti → güncelle, ID'yi koru
+          questions[idx] = { ...row, _id: rid };
+          updated++;
+        } else {
+          // ID var ama bulunamadı → ID'siyle yeni ekle
+          questions.push({ ...row, _id: rid });
+          added++;
+        }
+      } else {
+        // ID yok → yeni soru olarak ekle, yeni ID ver
+        questions.push({ ...row, _id: Date.now() + Math.random().toString(36).slice(2,7) });
+        added++;
+      }
+    });
     save();
+    alert(`✅ Tamamlandı!\n➕ ${added} yeni soru eklendi\n✏️ ${updated} soru güncellendi`);
   };
   fr.readAsArrayBuffer(input.files[0]);
+  input.value = '';
 }
 function exportToExcel() {
+  const data = questions.map(q => ({
+    _id: q._id||'',
+    Soru: q.Soru||'', A: q.A||'', B: q.B||'', C: q.C||'', D: q.D||'',
+    Dogru: q.Dogru||'', Kategori: q.Kategori||'', Etiketler: q.Etiketler||''
+  }));
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(questions), 'Sorular');
-  XLSX.writeFile(wb,'Yedek_Sorular.xlsx');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), 'Sorular');
+  XLSX.writeFile(wb, 'Yedek_Sorular.xlsx');
 }
 
-// ─── Render ───────────────────────────────────────────────────────────────────
+// ─── Tam Yedek (JSON) ─────────────────────────────────────────────────────────
+function exportFullBackup() {
+  const backup = {
+    version: 2,
+    date: new Date().toISOString(),
+    questions: questions,
+    fonts: JSON.parse(localStorage.getItem('pro_fonts2')||'null'),
+    loadedFonts: JSON.parse(localStorage.getItem('pro_loaded_fonts')||'{}'),
+    bg: localStorage.getItem('pro_bg')||''
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const ts   = new Date().toISOString().slice(0,10);
+  downloadBlob(blob, `ProStudio_Yedek_${ts}.json`);
+}
+
+async function importFullBackup(input) {
+  const fr = new FileReader();
+  fr.onload = async e => {
+    try {
+      const backup = JSON.parse(e.target.result);
+      if (!backup.version || !Array.isArray(backup.questions))
+        return alert('Geçersiz yedek dosyası!');
+      if (!confirm(`${backup.questions.length} soru ve tüm ayarlar yüklenecek.\nMevcut veriler silinecek. Devam?`)) return;
+
+      // Soruları yükle
+      questions = backup.questions;
+      localStorage.setItem('pro_questions', JSON.stringify(questions));
+
+      // Font ayarlarını yükle
+      if (backup.fonts) {
+        localStorage.setItem('pro_fonts2', JSON.stringify(backup.fonts));
+        fs = backup.fonts;
+      }
+
+      // Yüklü font dosyalarını geri yükle
+      if (backup.loadedFonts && Object.keys(backup.loadedFonts).length) {
+        loadedFonts = {};
+        fontStyleEl.textContent = '';
+        FONTS = [];
+        localStorage.setItem('pro_loaded_fonts', JSON.stringify(backup.loadedFonts));
+        for (const [fileName, entry] of Object.entries(backup.loadedFonts)) {
+          await registerFont(fileName, entry);
+        }
+        updateFontBadges();
+        buildFontLists();
+      }
+
+      // Arka planı yükle
+      if (backup.bg) {
+        localStorage.setItem('pro_bg', backup.bg);
+        applyBg(backup.bg);
+      }
+
+      restoreFontUI();
+      applyFonts();
+      renderTable();
+      alert('✅ Yedek başarıyla yüklendi!');
+    } catch(err) {
+      alert('Yedek yüklenirken hata: ' + err.message);
+    }
+  };
+  fr.readAsText(input.files[0]);
+  input.value = '';
+}
+
+// ─── Görsel Stil Sistemi ──────────────────────────────────────────────────────
+const DEFAULT_STYLE = {
+  qBgColor:'#ffffff', qTextColor:'#000000', qBorderColor:'#6366f1', qBorderWidth:2,
+  optBgColor:'#ffffff', optTextColor:'#000000', optBorderColor:'#6366f1', optBorderWidth:2,
+  corrBgColor:'#146c43', corrTextColor:'#ffffff', corrBorderColor:'#ffffff', corrBorderWidth:2};
+let SS = Object.assign({}, DEFAULT_STYLE);
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return {r,g,b};
+}
+
+function applyStyleSettings() {
+  // ── Slider & renk değerlerini SS'e oku ──
+  ['qBorderWidth','optBorderWidth','corrBorderWidth'].forEach(k => {
+    const el = document.getElementById(k); if(!el) return;
+    SS[k] = parseInt(el.value);
+    const badge = document.getElementById(k+'Val'); if(badge) badge.textContent = SS[k]+'px';
+  });
+  ['qBgColor','qTextColor','qBorderColor',
+   'optBgColor','optTextColor','optBorderColor',
+   'corrBgColor','corrTextColor','corrBorderColor'].forEach(k => {
+    const el = document.getElementById(k); if(el) SS[k] = el.value;
+  });
+
+  // ── LIVE PREVIEW: Soru Kapsülü ──
+  const cap = document.querySelector('.q-capsule');
+  const capWrap = document.getElementById('live-q-wrap');
+  if (cap) {
+    cap.style.setProperty('background', SS.qBgColor, 'important');
+    cap.style.setProperty('border-color', SS.qBorderColor, 'important');
+    cap.style.setProperty('border-width', SS.qBorderWidth + 'px', 'important');
+    cap.style.setProperty('border-style', 'solid', 'important');
+  }
+  const lq = document.getElementById('liveQ');
+  if (lq) lq.style.setProperty('color', SS.qTextColor, 'important');
+
+  // ── LIVE PREVIEW: Şık Kutuları ──
+  document.querySelectorAll('.opt-box').forEach(el => {
+    const isCorr = el.classList.contains('correct');
+    const bg = isCorr ? SS.corrBgColor    : SS.optBgColor;
+    const bc = isCorr ? SS.corrBorderColor: SS.optBorderColor;
+    const bw = isCorr ? SS.corrBorderWidth: SS.optBorderWidth;    const tc = isCorr ? SS.corrTextColor  : SS.optTextColor;
+    el.style.setProperty('background', bg, 'important');
+    el.style.setProperty('border-color', bc, 'important');
+    el.style.setProperty('border-width', bw + 'px', 'important');
+    el.style.setProperty('border-style', 'solid', 'important');    el.querySelectorAll('.opt-editable').forEach(t => t.style.setProperty('color', tc, 'important'));
+    el.querySelectorAll('.opt-circle').forEach(c => {
+      c.style.setProperty('color', tc, 'important');
+      c.style.setProperty('border-color', tc, 'important');
+      c.style.setProperty('background', 'transparent', 'important');
+    });
+  });
+
+  // ── RENDER: Soru kutusu — glow dış wrapper'a, kutu temiz ──
+  const rqWrap = document.getElementById('r-q-wrap');  if (rqWrap) {
+    rqWrap.style.setProperty('background', SS.qBgColor, 'important');
+    rqWrap.style.setProperty('border-color', SS.qBorderColor, 'important');
+    rqWrap.style.setProperty('border-width', SS.qBorderWidth + 'px', 'important');
+    rqWrap.style.setProperty('border-style', 'solid', 'important');  }  const rq = document.getElementById('r-q');
+  if (rq) rq.style.setProperty('color', SS.qTextColor, 'important');
+
+  // ── RENDER: Şık kutuları — glow rwrap'a, kutu temiz ──
+  ['a','b','c','d'].forEach(l => {
+    const box  = document.getElementById('box-' + l);    const circle = document.getElementById('rcircle-' + l);
+    const txt  = document.getElementById('r-' + l);
+    if (!box) return;
+    const isCorr = box.classList.contains('correct');
+    const bg = isCorr ? SS.corrBgColor    : SS.optBgColor;
+    const bc = isCorr ? SS.corrBorderColor: SS.optBorderColor;
+    const bw = isCorr ? SS.corrBorderWidth: SS.optBorderWidth;    const tc = isCorr ? SS.corrTextColor  : SS.optTextColor;
+    // Kutu: sadece dolgu + border, box-shadow YOK
+    box.style.setProperty('background', bg, 'important');
+    box.style.setProperty('border-color', bc, 'important');
+    box.style.setProperty('border-width', bw + 'px', 'important');
+    box.style.setProperty('border-style', 'solid', 'important');
+    box.style.removeProperty('box-shadow');    if (circle) {
+      circle.style.setProperty('border-color', tc, 'important');
+      circle.style.setProperty('background', 'transparent', 'important');
+      const span = circle.querySelector('span');
+      if (span) span.style.setProperty('color', tc, 'important');
+    }
+    if (txt) txt.style.setProperty('color', tc, 'important');
+  });
+
+  saveStyleSettings();
+}
+
+function applyStyleToRenderBox(el, isCorr) {
+  if (!el) return;
+  const id   = el.id.replace('box-','');
+  const bg   = isCorr ? SS.corrBgColor    : SS.optBgColor;
+  const tc   = isCorr ? SS.corrTextColor  : SS.optTextColor;
+  const bc   = isCorr ? SS.corrBorderColor: SS.optBorderColor;
+  const bw   = isCorr ? SS.corrBorderWidth: SS.optBorderWidth;
+  // Kutu: sadece dolgu rengi + border — box-shadow YOK, köşe sorunu olmaz
+  el.style.setProperty('background', bg, 'important');
+  el.style.setProperty('border-color', bc, 'important');
+  el.style.setProperty('border-width', bw + 'px', 'important');
+  el.style.setProperty('border-style', 'solid', 'important');
+  const circle = document.getElementById('rcircle-' + id);
+  if (circle) {
+    circle.style.setProperty('border-color', tc, 'important');
+    circle.style.setProperty('background', 'transparent', 'important');
+    const span = circle.querySelector('span');
+    if (span) span.style.setProperty('color', tc, 'important');
+  }
+  const txt = document.getElementById('r-' + id);
+  if (txt) txt.style.setProperty('color', tc, 'important');
+}
+
+function saveStyleSettings() {
+  try { localStorage.setItem('pro_style2', JSON.stringify(SS)); } catch(e){}
+}
+
+function restoreStyleSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('pro_style2')||'null');
+    if (saved) SS = Object.assign({}, DEFAULT_STYLE, saved);
+  } catch(e){}
+  // UI kontrollerini doldur
+  Object.keys(SS).forEach(k => {
+    const el = document.getElementById(k);
+    if (!el) return;
+    el.value = SS[k];
+  });
+  // Badge'leri güncelle
+  ['qBorderWidth','optBorderWidth','corrBorderWidth'].forEach(k => {
+    const b = document.getElementById(k+'Val'); if(b) b.textContent = SS[k]+'px';
+  });
+  setTimeout(applyStyleSettings, 120);
+}
+
+function resetStyleSettings() {
+  SS = Object.assign({}, DEFAULT_STYLE);
+  Object.keys(SS).forEach(k => { const el = document.getElementById(k); if(el) el.value = SS[k]; });
+  ['qBorderWidth','optBorderWidth','corrBorderWidth'].forEach(k => {
+    const b = document.getElementById(k+'Val'); if(b) b.textContent = SS[k]+'px';
+  });
+  applyStyleSettings();
+}
+
+
+
 function updateRender(q, isCorr) {
   document.getElementById('r-q').innerText = q.Soru||'';
   ['a','b','c','d'].forEach(l => document.getElementById('r-'+l).innerText = q[l.toUpperCase()]||'');
 
+  // Soru kutusu stili
+  const rqWrap = document.getElementById('r-q-wrap');  if (rqWrap) {
+    rqWrap.style.setProperty('background', SS.qBgColor, 'important');
+    rqWrap.style.setProperty('border-color', SS.qBorderColor, 'important');
+    rqWrap.style.setProperty('border-width', SS.qBorderWidth + 'px', 'important');
+    rqWrap.style.setProperty('border-style', 'solid', 'important');  }  const rqEl = document.getElementById('r-q');
+  if (rqEl) rqEl.style.setProperty('color', SS.qTextColor, 'important');
+
+  // Şık kutuları stili
   ['a','b','c','d'].forEach(l => {
     const el = document.getElementById('box-'+l);
-    el.style.borderColor = '#adb5bd'; el.style.background = '#f8f9fa';
-    el.querySelector('div:first-child').style.color       = '#000';
-    el.querySelector('div:first-child').style.borderColor = '#000';
-    el.querySelector('div:last-child').style.color        = '#000';
+    const correct = isCorr && q.Dogru && l === q.Dogru.toLowerCase();
+    applyStyleToRenderBox(el, correct);
   });
 
-  if (isCorr && q.Dogru) {
-    const el = document.getElementById('box-'+q.Dogru.toLowerCase());
-    if (el) {
-      el.style.borderColor = '#fff';
-      el.style.background  = '#146c43';
-      const circle = el.querySelector('div:first-child');
-      circle.style.color       = '#fff';
-      circle.style.borderColor = '#fff';
-      el.querySelector('div:last-child').style.color = '#fff';
-    }
-  }
   applyFonts();
 }
 
@@ -780,7 +1379,8 @@ async function processAll(type) {
       }
       if (doVid) {
         const blob  = await renderMp4(document.getElementById('render-box'),w,h,dur);
-        const fName = makeFileName(q,soruNo,isCorr,'mp4');
+        const ext   = blob.type.includes('webm') ? 'webm' : blob.type.includes('jpeg') ? 'jpg' : 'mp4';
+        const fName = makeFileName(q,soruNo,isCorr,ext);
         if (dlMethod==='zip') zip.file(fName,blob); else downloadBlob(blob,fName);
         done++;
       }
@@ -806,44 +1406,93 @@ function downloadBlob(blob, name) {
 const canvasToBlob = (c,t,q) => new Promise(r => c.toBlob(r,t,q));
 const sleep        = ms      => new Promise(r => setTimeout(r,ms));
 
-async function renderMp4(element,w,h,durationSec) {
-  if (typeof VideoEncoder==='undefined') return renderWebmFallback(element,w,h,durationSec*1000);
-  const src = await html2canvas(element,{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});
-  const {Muxer,ArrayBufferTarget} = Mp4Muxer;
-  const target = new ArrayBufferTarget();
-  const muxer  = new Muxer({target,video:{codec:'avc',width:w,height:h},fastStart:'in-memory'});
-  const fps=30, tot=durationSec*fps, dur=Math.round(1_000_000/fps);
-  const enc = new VideoEncoder({output:(chunk,meta)=>muxer.addVideoChunk(chunk,meta),error:e=>console.error(e)});
-  enc.configure({codec:'avc1.42001f',width:w,height:h,bitrate:8_000_000,framerate:fps});
-  const off = document.createElement('canvas'); off.width=w; off.height=h;
-  const ctx = off.getContext('2d');
-  for (let i=0; i<tot; i++) {
-    ctx.drawImage(src,0,0,w,h);
-    const vf = new VideoFrame(off,{timestamp:i*dur,duration:dur});
-    enc.encode(vf,{keyFrame:i%(fps*2)===0}); vf.close();
-    if (i%fps===0) await sleep(0);
+async function renderMp4(element, w, h, durationSec) {
+  // 1. Önce sabit frame'i al
+  const src = await html2canvas(element, {scale:1, useCORS:true, allowTaint:true, width:w, height:h, logging:false});
+
+  // 2. WebCodecs (VideoEncoder) varsa → gerçek MP4
+  if (typeof VideoEncoder !== 'undefined' && typeof Mp4Muxer !== 'undefined') {
+    try {
+      const {Muxer, ArrayBufferTarget} = Mp4Muxer;
+      const target = new ArrayBufferTarget();
+      const muxer  = new Muxer({target, video:{codec:'avc', width:w, height:h}, fastStart:'in-memory'});
+      const fps = 30, tot = durationSec * fps;
+      const frameDur = Math.round(1_000_000 / fps);
+
+      // Mac'te avc1.42001f desteklenmeyebilir — codec listesi dene
+      const codecs = ['avc1.42001f','avc1.4d001f','avc1.640028'];
+      let chosenCodec = null;
+      for (const c of codecs) {
+        const support = await VideoEncoder.isConfigSupported({codec:c, width:w, height:h, bitrate:8_000_000, framerate:fps});
+        if (support.supported) { chosenCodec = c; break; }
+      }
+
+      if (chosenCodec) {
+        const enc = new VideoEncoder({
+          output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+          error:  e => console.warn('VideoEncoder hata:', e)
+        });
+        enc.configure({codec:chosenCodec, width:w, height:h, bitrate:8_000_000, framerate:fps});
+
+        const off = document.createElement('canvas'); off.width = w; off.height = h;
+        const ctx = off.getContext('2d');
+        for (let i = 0; i < tot; i++) {
+          ctx.drawImage(src, 0, 0, w, h);
+          const vf = new VideoFrame(off, {timestamp: i * frameDur, duration: frameDur});
+          enc.encode(vf, {keyFrame: i % (fps * 2) === 0});
+          vf.close();
+          if (i % fps === 0) await sleep(0);
+        }
+        await enc.flush();
+        muxer.finalize();
+        return new Blob([target.buffer], {type:'video/mp4'});
+      }
+    } catch(err) {
+      console.warn('WebCodecs MP4 başarısız, WebM fallback:', err);
+    }
   }
-  await enc.flush(); muxer.finalize();
-  return new Blob([target.buffer],{type:'video/mp4'});
+
+  // 3. Fallback: MediaRecorder ile WebM (Safari hariç her yerde çalışır)
+  return renderWebmFallback(src, w, h, durationSec * 1000);
 }
 
-function renderWebmFallback(element,w,h,durationMs) {
-  return new Promise(async (resolve,reject) => {
-    const mime = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
-    if (!mime) return reject(new Error('Video desteklenmiyor'));
-    const src = await html2canvas(element,{scale:1,useCORS:true,allowTaint:true,width:w,height:h,logging:false});
-    const wc  = document.getElementById('video-canvas'); wc.width=w; wc.height=h;
-    const ctx = wc.getContext('2d'); ctx.drawImage(src,0,0,w,h);
-    const stream = wc.captureStream(30);
-    const rec    = new MediaRecorder(stream,{mimeType:mime});
-    const chunks = [];
-    rec.ondataavailable = e => { if(e.data?.size>0) chunks.push(e.data); };
-    rec.onstop    = () => { stream.getTracks().forEach(t=>t.stop()); resolve(new Blob(chunks,{type:mime})); };
-    rec.onerror   = reject; rec.start();
-    let cnt=0, last=performance.now(), tot=Math.ceil((durationMs/1000)*30);
+function renderWebmFallback(srcCanvas, w, h, durationMs) {
+  return new Promise((resolve, reject) => {
+    const mime = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm']
+      .find(t => MediaRecorder.isTypeSupported(t));
+
+    if (!mime) {
+      // 4. Son çare: sadece JPEG indir
+      srcCanvas.toBlob(blob => resolve(blob), 'image/jpeg', 0.95);
+      return;
+    }
+
+    const wc  = document.getElementById('video-canvas');
+    wc.width = w; wc.height = h;
+    const ctx = wc.getContext('2d');
+    ctx.drawImage(srcCanvas, 0, 0, w, h);
+
+    const stream  = wc.captureStream(30);
+    const rec     = new MediaRecorder(stream, {mimeType: mime});
+    const chunks  = [];
+    rec.ondataavailable = e => { if (e.data?.size > 0) chunks.push(e.data); };
+    rec.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      resolve(new Blob(chunks, {type: mime}));
+    };
+    rec.onerror = reject;
+    rec.start();
+
+    let cnt = 0, last = performance.now();
+    const tot = Math.ceil((durationMs / 1000) * 30);
     function tick(now) {
-      if (now-last>=33) { ctx.drawImage(src,0,0,w,h); ctx.fillStyle='rgba(0,0,0,0.003)'; ctx.fillRect(0,0,1,1); last=now; cnt++; }
-      if (cnt<tot) requestAnimationFrame(tick); else rec.stop();
+      if (now - last >= 33) {
+        ctx.drawImage(srcCanvas, 0, 0, w, h);
+        ctx.fillStyle = 'rgba(0,0,0,0.002)'; ctx.fillRect(0,0,1,1);
+        last = now; cnt++;
+      }
+      if (cnt < tot) requestAnimationFrame(tick);
+      else rec.stop();
     }
     requestAnimationFrame(tick);
   });
@@ -855,6 +1504,7 @@ restoreFontsFromDB().then(() => {
   restoreFontUI();
   applyFonts();
 });
+restoreStyleSettings();
 renderTable();
 window.addEventListener('resize', applyFonts);
 </script>
