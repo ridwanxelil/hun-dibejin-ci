@@ -286,8 +286,8 @@ tr.q-row:hover { background:rgba(255,255,255,.04); cursor:pointer; }
                 </div>
                 <div class="d-flex align-items-center gap-2 mt-2 pt-2 border-top">
                   <span class="text-muted small">Punto</span>
-                  <input type="range" class="form-range flex-grow-1" id="qSizeSlider" min="24" max="96" value="52" oninput="onSizeChange('q')">
-                  <span class="badge bg-secondary" id="qSizeVal">52px</span>
+                  <input type="range" class="form-range flex-grow-1" id="qSizeSlider" min="24" max="96" value="40" oninput="onSizeChange('q')">
+                  <span class="badge bg-secondary" id="qSizeVal">40px</span>
                 </div>
               </div>
               <div class="col-6">
@@ -419,22 +419,56 @@ async function loadFontsFromFiles(input) {
     const fontName = fileNameToFontName(file.name);
     const weight   = guessWeight(file.name);
     const style    = guessStyle(file.name);
-    loadedFonts[file.name] = { dataUrl, fontName, weight, style };
-    fontStyleEl.textContent += `@font-face {
-      font-family: '${fontName}';
-      src: url('${dataUrl}') format('${fmt}');
-      font-weight: ${weight};
-      font-style: ${style};
-    }`;
-    if (!FONTS.find(f => f.name === fontName))
-      FONTS.push({ name: fontName, label: fontName });
+    await registerFont(file.name, { dataUrl, fontName, weight, style, fmt });
   }
+  saveFontsToDB();
   updateFontBadges();
   buildFontLists();
   if (FONTS.length > 0) {
     if (!FONTS.find(f => f.name === fs.qFont))   fs.qFont   = FONTS[0].name;
     if (!FONTS.find(f => f.name === fs.optFont)) fs.optFont = FONTS[0].name;
     saveFonts(); applyFonts(); updateBadge();
+  }
+}
+
+// Tek bir fontu sisteme kayıt et (hem belleğe hem @font-face)
+async function registerFont(fileName, entry) {
+  loadedFonts[fileName] = entry;
+  fontStyleEl.textContent += `@font-face {
+    font-family: '${entry.fontName}';
+    src: url('${entry.dataUrl}') format('${entry.fmt}');
+    font-weight: ${entry.weight};
+    font-style: ${entry.style};
+  }`;
+  if (!FONTS.find(f => f.name === entry.fontName))
+    FONTS.push({ name: entry.fontName, label: entry.fontName });
+}
+
+// Yüklü fontları localStorage'a kaydet
+function saveFontsToDB() {
+  try {
+    localStorage.setItem('pro_loaded_fonts', JSON.stringify(loadedFonts));
+  } catch(e) {
+    // localStorage dolu olabilir (base64 fontlar büyük olabilir)
+    console.warn('Font kayıt hatası:', e);
+  }
+}
+
+// Sayfa açılışında localStorage'dan fontları geri yükle
+async function restoreFontsFromDB() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('pro_loaded_fonts') || '{}');
+    const entries = Object.entries(saved);
+    if (!entries.length) return;
+    for (const [fileName, entry] of entries) {
+      await registerFont(fileName, entry);
+    }
+    updateFontBadges();
+    buildFontLists();
+    applyFonts();
+    updateBadge();
+  } catch(e) {
+    console.warn('Font geri yükleme hatası:', e);
   }
 }
 
@@ -463,7 +497,7 @@ let dlMethod   = 'single';
 let correctVal = '';
 
 let fs = JSON.parse(localStorage.getItem('pro_fonts2') || 'null') || {
-  qFont:'TRT Bold', qItalic:false, qBold:true,  qSize:52,
+  qFont:'TRT Bold', qItalic:false, qBold:true,  qSize:40,
   optFont:'TRT Regular', optItalic:false, optBold:true, optSize:30
 };
 
@@ -816,8 +850,11 @@ function renderWebmFallback(element,w,h,durationMs) {
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
-buildFontLists();
-restoreFontUI();
+restoreFontsFromDB().then(() => {
+  buildFontLists();
+  restoreFontUI();
+  applyFonts();
+});
 renderTable();
 window.addEventListener('resize', applyFonts);
 </script>
